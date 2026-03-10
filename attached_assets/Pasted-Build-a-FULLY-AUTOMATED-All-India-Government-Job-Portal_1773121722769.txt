@@ -1,0 +1,255 @@
+Build a FULLY AUTOMATED All India Government Job Portal similar to Sarkari Result.
+
+IMPORTANT REQUIREMENT
+Use ONLY free and open-source tools.
+Do NOT use paid APIs like OpenAI.
+
+TECH STACK
+
+Backend:
+Python Flask
+
+Frontend:
+HTML
+CSS
+JavaScript
+
+Database:
+PostgreSQL using Neon free serverless database.
+
+The project must be deployable on Fly.io.
+
+MAIN WEBSITE FEATURES
+
+Homepage
+
+Create a modern responsive homepage with sections:
+
+Latest Jobs
+Admit Cards
+Results
+Answer Keys
+Syllabus
+Admissions
+
+Display jobs as cards showing:
+
+Job Title
+Organization
+Total Posts
+Start Date
+Last Date
+Apply Now Button
+Notification Button
+
+JOB DETAIL PAGE
+
+Each job must have an SEO friendly page with full job information.
+
+Sections should include:
+
+Introduction
+Important Dates
+Application Fee
+Age Limit
+Vacancy Details
+Eligibility
+Salary
+How to Apply
+Important Links
+
+Each job page must support structured headings for SEO.
+
+CATEGORIES
+
+Create category pages for:
+
+Central Govt Jobs
+State Govt Jobs
+Bank Jobs
+Railway Jobs
+Police Jobs
+Defence Jobs
+Teaching Jobs
+Engineering Jobs
+Medical Jobs
+
+SEARCH SYSTEM
+
+Create advanced search and filtering by:
+
+State
+Qualification
+Category
+Organization
+Last Date
+
+ADMIN PANEL
+
+Create a secure admin panel with login authentication.
+
+Admin can:
+
+Add Job
+Edit Job
+Delete Job
+Upload Notification PDF
+Manage Categories
+Manage Subscribers
+
+DATABASE STRUCTURE
+
+Create PostgreSQL tables:
+
+jobs
+categories
+users
+subscribers
+notifications
+
+Jobs table fields:
+
+id
+title
+slug
+organization
+department
+category
+qualification
+total_posts
+salary
+application_fee
+age_limit
+start_date
+last_date
+apply_link
+notification_link
+description
+created_at
+
+AUTO JOB SCRAPER
+
+Create a Python scraper module using:
+
+requests
+BeautifulSoup
+
+The scraper should automatically collect job data from government job websites.
+
+Extract:
+
+Job Title
+Organization
+Last Date
+Apply Link
+Notification Link
+
+Store scraped jobs in database.
+
+Run scraper automatically once per day using a scheduled task.
+
+AI CONTENT GENERATOR (FREE)
+
+Use open source AI models instead of paid APIs.
+
+Use Ollama with Llama3 or similar open-source models.
+
+The AI system should convert job data into a full SEO article including:
+
+Introduction
+Vacancy Details
+Eligibility
+Important Dates
+Application Process
+Important Links
+
+Automatically publish article as job page.
+
+TELEGRAM BOT
+
+Create Telegram bot integration.
+
+When a new job is added:
+
+Automatically send formatted message to Telegram channel.
+
+Message format:
+
+New Job Alert
+
+Job Title
+Organization
+Total Posts
+Last Date
+
+Apply Link
+
+EMAIL SUBSCRIPTION SYSTEM
+
+Allow users to subscribe to job alerts.
+
+Use free email API such as Resend free tier.
+
+Send job alert emails when new jobs are posted.
+
+SEO SYSTEM
+
+Generate SEO-friendly URLs:
+
+/job/ssc-gd-constable-recruitment-2026
+/category/bank-jobs
+/category/railway-jobs
+
+Automatically generate:
+
+sitemap.xml
+robots.txt
+meta tags
+schema structured data
+
+OPTIMIZE FOR GOOGLE DISCOVER
+
+Use large featured images
+Fast loading pages
+Structured headings
+
+PERFORMANCE
+
+Optimize for:
+
+Fast loading
+Mobile responsive design
+Lazy loading images
+Caching
+
+UI DESIGN
+
+Create a professional UI similar to major job portals.
+
+Include:
+
+Top navigation menu
+Latest job ticker
+Job cards grid
+Category sections
+Footer with important links
+
+SECURITY
+
+Secure admin login
+Protect database queries
+Prevent spam
+Use environment variables for secrets.
+
+PROJECT STRUCTURE
+
+Organize the project with clear folders:
+
+backend
+templates
+static
+scraper
+ai_module
+telegram_bot
+
+Ensure the project is ready for deployment on Fly.io.

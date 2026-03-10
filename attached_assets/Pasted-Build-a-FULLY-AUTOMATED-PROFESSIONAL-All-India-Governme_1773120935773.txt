@@ -1,0 +1,244 @@
+Build a FULLY AUTOMATED PROFESSIONAL All India Government Job Portal similar to Sarkari Result or FreeJobAlert.
+
+TECH STACK
+Backend: Python Flask
+Frontend: HTML, CSS, JavaScript
+Database: PostgreSQL
+Deployment ready for Replit or cloud hosting.
+
+PROJECT NAME
+IndiaJobPortal
+
+CORE GOAL
+Create a complete automated job portal that collects job information from multiple government job websites, stores them in a database, generates SEO job pages automatically, and publishes them on the website.
+
+MAIN WEBSITE FEATURES
+
+Homepage
+Display sections for:
+Latest Jobs
+Admit Card
+Results
+Answer Key
+Syllabus
+Admissions
+
+Each job should appear in card format showing:
+Job Title
+Organization
+Total Posts
+Start Date
+Last Date
+Apply Button
+Notification Button
+
+JOB DETAIL PAGE
+
+Each job must have a dedicated SEO page with:
+
+Job Title
+Organization
+Department
+Total Vacancies
+Qualification
+Age Limit
+Application Fee
+Selection Process
+Salary
+Important Dates
+Start Date
+Last Date
+Apply Link
+Official Website
+Notification PDF
+
+Create sections:
+
+Important Dates
+Application Fee
+Age Limit
+Vacancy Details
+How to Apply
+
+CATEGORIES
+
+Create job categories:
+
+Central Govt Jobs
+State Govt Jobs
+Bank Jobs
+Railway Jobs
+Police Jobs
+Defence Jobs
+Teaching Jobs
+Engineering Jobs
+Medical Jobs
+
+SEARCH SYSTEM
+
+Add powerful search and filters by:
+
+State
+Qualification
+Category
+Organization
+Last Date
+
+ADMIN PANEL
+
+Create secure admin dashboard with login.
+
+Admin features:
+
+Add Job
+Edit Job
+Delete Job
+Upload Notification PDF
+Manage Categories
+Manage Subscribers
+View Scraped Jobs
+
+DATABASE STRUCTURE
+
+Create tables:
+
+jobs
+categories
+users
+subscribers
+notifications
+
+Jobs table fields:
+
+id
+title
+slug
+organization
+department
+category
+qualification
+total_posts
+salary
+application_fee
+age_limit
+start_date
+last_date
+apply_link
+notification_link
+description
+created_at
+
+AUTO JOB SCRAPER SYSTEM
+
+Create a Python scraper module that automatically collects job data from multiple government job sources.
+
+The scraper should extract:
+
+Job Title
+Organization
+Last Date
+Apply Link
+Notification Link
+
+The scraper should run automatically every day and add new jobs to the database.
+
+AI JOB ARTICLE GENERATOR
+
+Integrate an AI content generator that converts job data into a full SEO article.
+
+Each job article should contain:
+
+Introduction
+Vacancy Details
+Eligibility
+Important Dates
+Application Process
+Official Links
+
+Automatically publish the article as a job page.
+
+TELEGRAM AUTO POST SYSTEM
+
+Create a Telegram bot integration.
+
+When a new job is added:
+
+Automatically send formatted job alerts to a Telegram channel.
+
+Example message format:
+
+New Job Alert
+
+Job Title
+Organization
+Total Posts
+Last Date
+
+Apply Now Link
+
+EMAIL ALERT SYSTEM
+
+Allow users to subscribe using email.
+
+Send automated job alert emails when new jobs are posted.
+
+SEO OPTIMIZATION
+
+Generate SEO-friendly URLs like:
+
+/job/ssc-gd-constable-recruitment-2026
+/category/bank-jobs
+/category/railway-jobs
+
+Automatically generate:
+
+sitemap.xml
+robots.txt
+meta tags
+structured schema markup
+
+Optimize pages for Google Discover by including:
+
+Large featured image
+Fast loading layout
+Structured headings
+
+PERFORMANCE
+
+Optimize the website for:
+
+Fast loading
+Mobile responsive design
+Caching
+Lazy loading images
+
+UI DESIGN
+
+Create a professional UI similar to top job portals.
+
+Include:
+
+Top navigation menu
+Latest job ticker
+Job cards
+Category grid
+Footer with important links
+
+SECURITY
+
+Secure admin login
+Use environment variables for secrets
+Protect database queries
+Prevent spam submissions
+
+DEPLOYMENT
+
+Organize project with clean folder structure.
+
+Make it ready for deployment on:
+
+Replit
+Fly.io
+or other cloud platforms.
+
+Include documentation explaining how to run the scraper, admin panel, and automation scripts.
