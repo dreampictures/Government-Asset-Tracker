@@ -1,0 +1,168 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Edit Job{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Edit Job</h1>
+    <div>
+        <form action="{{ url_for('admin.generate_content', job_id=job.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-accent">🤖 Generate AI Content</button>
+        </form>
+        <a href="{{ url_for('admin.jobs_list') }}" class="btn btn-outline">← Back</a>
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Job Title *</label>
+                <input type="text" name="title" value="{{ job.title }}" required>
+            </div>
+            <div class="form-group">
+                <label>Organization</label>
+                <input type="text" name="organization" value="{{ job.organization }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" value="{{ job.department }}">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category_id">
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if job.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>State</label>
+                <select name="state">
+                    {% for s in states %}
+                    <option value="{{ s }}" {% if job.state == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Qualification</label>
+                <select name="qualification">
+                    <option value="">Select Qualification</option>
+                    {% for q in qualifications %}
+                    <option value="{{ q }}" {% if job.qualification == q %}selected{% endif %}>{{ q }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Total Posts</label>
+                <input type="text" name="total_posts" value="{{ job.total_posts }}">
+            </div>
+            <div class="form-group">
+                <label>Salary</label>
+                <input type="text" name="salary" value="{{ job.salary }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="text" name="start_date" value="{{ job.start_date }}">
+            </div>
+            <div class="form-group">
+                <label>Last Date</label>
+                <input type="text" name="last_date" value="{{ job.last_date }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Job Type</label>
+                <select name="job_type">
+                    <option value="latest_jobs" {% if job.job_type == 'latest_jobs' %}selected{% endif %}>Latest Jobs</option>
+                    <option value="admit_card" {% if job.job_type == 'admit_card' %}selected{% endif %}>Admit Card</option>
+                    <option value="result" {% if job.job_type == 'result' %}selected{% endif %}>Result</option>
+                    <option value="answer_key" {% if job.job_type == 'answer_key' %}selected{% endif %}>Answer Key</option>
+                    <option value="syllabus" {% if job.job_type == 'syllabus' %}selected{% endif %}>Syllabus</option>
+                    <option value="admission" {% if job.job_type == 'admission' %}selected{% endif %}>Admission</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Published</label>
+                <select name="is_published">
+                    <option value="1" {% if job.is_published %}selected{% endif %}>Yes</option>
+                    <option value="" {% if not job.is_published %}selected{% endif %}>No (Draft)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Application Fee</label>
+            <textarea name="application_fee" rows="3">{{ job.application_fee }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Age Limit</label>
+            <textarea name="age_limit" rows="3">{{ job.age_limit }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Selection Process</label>
+            <textarea name="selection_process" rows="3">{{ job.selection_process }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Vacancy Details</label>
+            <textarea name="vacancy_details" rows="4">{{ job.vacancy_details }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>How to Apply</label>
+            <textarea name="how_to_apply" rows="4">{{ job.how_to_apply }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Description / Full Article (HTML supported)</label>
+            <textarea name="description" rows="8">{{ job.description }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Apply Link</label>
+                <input type="url" name="apply_link" value="{{ job.apply_link }}">
+            </div>
+            <div class="form-group">
+                <label>Official Website</label>
+                <input type="url" name="official_website" value="{{ job.official_website }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Notification Link</label>
+                <input type="text" name="notification_link" value="{{ job.notification_link }}">
+            </div>
+            <div class="form-group">
+                <label>Upload New Notification PDF</label>
+                <input type="file" name="notification_pdf" accept=".pdf,.doc,.docx">
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary btn-lg">Update Job</button>
+            <a href="{{ url_for('admin.jobs_list') }}" class="btn btn-outline btn-lg" style="margin-left: 10px;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

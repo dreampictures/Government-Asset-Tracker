@@ -1,0 +1,162 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Add Job{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Add New Job</h1>
+    <a href="{{ url_for('admin.jobs_list') }}" class="btn btn-outline">← Back to Jobs</a>
+</div>
+
+<div class="form-card">
+    <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Job Title *</label>
+                <input type="text" name="title" required placeholder="e.g., SSC GD Constable Recruitment 2026">
+            </div>
+            <div class="form-group">
+                <label>Organization</label>
+                <input type="text" name="organization" placeholder="e.g., Staff Selection Commission">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" placeholder="e.g., Ministry of Home Affairs">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category_id">
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>State</label>
+                <select name="state">
+                    {% for s in states %}
+                    <option value="{{ s }}" {% if s == 'All India' %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Qualification</label>
+                <select name="qualification">
+                    <option value="">Select Qualification</option>
+                    {% for q in qualifications %}
+                    <option value="{{ q }}">{{ q }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Total Posts</label>
+                <input type="text" name="total_posts" placeholder="e.g., 25000">
+            </div>
+            <div class="form-group">
+                <label>Salary</label>
+                <input type="text" name="salary" placeholder="e.g., Rs. 21,700 - 69,100">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="text" name="start_date" placeholder="e.g., 01-03-2026">
+            </div>
+            <div class="form-group">
+                <label>Last Date</label>
+                <input type="text" name="last_date" placeholder="e.g., 31-03-2026">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Job Type</label>
+                <select name="job_type">
+                    <option value="latest_jobs">Latest Jobs</option>
+                    <option value="admit_card">Admit Card</option>
+                    <option value="result">Result</option>
+                    <option value="answer_key">Answer Key</option>
+                    <option value="syllabus">Syllabus</option>
+                    <option value="admission">Admission</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Published</label>
+                <select name="is_published">
+                    <option value="1" selected>Yes</option>
+                    <option value="">No (Draft)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Application Fee</label>
+            <textarea name="application_fee" rows="3" placeholder="e.g., General: Rs. 100, SC/ST/Women: Nil"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Age Limit</label>
+            <textarea name="age_limit" rows="3" placeholder="e.g., 18-23 Years. Age relaxation as per rules."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Selection Process</label>
+            <textarea name="selection_process" rows="3" placeholder="e.g., Written Exam, Physical Test, Medical Test"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Vacancy Details</label>
+            <textarea name="vacancy_details" rows="4" placeholder="Detailed vacancy breakdown..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>How to Apply</label>
+            <textarea name="how_to_apply" rows="4" placeholder="Step by step application process..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Description / Full Article (HTML supported)</label>
+            <textarea name="description" rows="6" placeholder="Full job description. HTML tags supported."></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Apply Link</label>
+                <input type="url" name="apply_link" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Official Website</label>
+                <input type="url" name="official_website" placeholder="https://...">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Notification Link / URL</label>
+                <input type="text" name="notification_link" placeholder="https://... or leave blank if uploading PDF">
+            </div>
+            <div class="form-group">
+                <label>Upload Notification PDF</label>
+                <input type="file" name="notification_pdf" accept=".pdf,.doc,.docx">
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary btn-lg">Add Job</button>
+            <a href="{{ url_for('admin.jobs_list') }}" class="btn btn-outline btn-lg" style="margin-left: 10px;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

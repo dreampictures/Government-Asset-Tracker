@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ state_name }} Government Jobs 2026 | IndiaJobPortal{% endblock %}
+{% block meta_description %}Latest {{ state_name }} government jobs 2026. Find all sarkari naukri in {{ state_name }} - apply online for latest vacancies. Updated daily.{% endblock %}
+{% block meta_keywords %}{{ state_name }} government jobs, {{ state_name }} sarkari naukri, {{ state_name }} jobs 2026{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "{{ state_name }} Government Jobs",
+    "description": "Latest government job listings in {{ state_name }}",
+    "url": "{{ request.url }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 20px;">
+    <div class="breadcrumb">
+        <a href="{{ url_for('main.index') }}">Home</a> <span>›</span> <span>{{ state_name }} Govt Jobs</span>
+    </div>
+
+    <div class="page-layout">
+        <div>
+            <div class="section-header">
+                <h2>📍 {{ state_name }} Government Jobs</h2>
+                <span style="color: #666; font-size: 14px;">{{ jobs.total }} jobs found</span>
+            </div>
+
+            {% if jobs.items %}
+            <div class="job-grid">
+                {% for job in jobs.items %}
+                <div class="job-card">
+                    <h3><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></h3>
+                    <div class="org">{{ job.organization }}</div>
+                    <div class="meta">
+                        {% if job.total_posts %}<span>📊 {{ job.total_posts }} Posts</span>{% endif %}
+                        {% if job.last_date %}<span>⏰ {{ job.last_date }}</span>{% endif %}
+                        {% if job.qualification %}<span>🎓 {{ job.qualification }}</span>{% endif %}
+                    </div>
+                    <div class="actions">
+                        <a href="{{ url_for('main.job_detail', slug=job.slug) }}" class="btn btn-primary btn-sm">View Details</a>
+                        {% if job.apply_link %}<a href="{{ job.apply_link }}" class="btn btn-accent btn-sm" target="_blank" rel="noopener">Apply</a>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if jobs.pages > 1 %}
+            <div class="pagination">
+                {% if jobs.has_prev %}
+                <a href="{{ url_for('main.state_page', slug=slug, page=jobs.prev_num) }}">← Prev</a>
+                {% endif %}
+                {% for p in jobs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                        <a href="{{ url_for('main.state_page', slug=slug, page=p) }}" class="{% if p == jobs.page %}active{% endif %}">{{ p }}</a>
+                    {% else %}
+                        <span class="disabled">...</span>
+                    {% endif %}
+                {% endfor %}
+                {% if jobs.has_next %}
+                <a href="{{ url_for('main.state_page', slug=slug, page=jobs.next_num) }}">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="detail-card" style="text-align: center; padding: 40px;">
+                <p>No jobs found for {{ state_name }}. Check back soon!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="sidebar">
+            <div class="subscribe-widget">
+                <h3 style="border-bottom: none;">📧 Job Alerts</h3>
+                <p>Get {{ state_name }} job alerts</p>
+                <form action="{{ url_for('main.subscribe') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="email" name="email" placeholder="Your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </div>
+            <div class="sidebar-widget">
+                <h3>📍 Other States</h3>
+                <ul>
+                    {% for s_slug, s_name in get_top_states() %}
+                    <li><a href="{{ url_for('main.state_page', slug=s_slug) }}">{{ s_name }} Jobs</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} - IndiaJobPortal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <h2><a href="{{ url_for('admin.dashboard') }}" style="color: white;">IndiaJobPortal</a></h2>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}">📊 Dashboard</a>
+                <a href="{{ url_for('admin.jobs_list') }}">📋 Jobs</a>
+                <a href="{{ url_for('admin.add_job') }}">➕ Add Job</a>
+                <a href="{{ url_for('admin.categories_list') }}">📂 Categories</a>
+                <a href="{{ url_for('admin.subscribers_list') }}">📧 Subscribers</a>
+                <a href="{{ url_for('main.index') }}">🌐 View Site</a>
+                <a href="{{ url_for('admin.logout') }}">🚪 Logout</a>
+            </nav>
+        </aside>
+        <div class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

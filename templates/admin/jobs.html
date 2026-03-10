@@ -1,0 +1,73 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Manage Jobs{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Manage Jobs</h1>
+    <a href="{{ url_for('admin.add_job') }}" class="btn btn-primary">➕ Add Job</a>
+</div>
+
+<div class="form-card">
+    <table class="job-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Organization</th>
+                <th>Category</th>
+                <th>Views</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for job in jobs.items %}
+        <tr>
+            <td>{{ job.id }}</td>
+            <td><a href="{{ url_for('main.job_detail', slug=job.slug) }}" target="_blank">{{ job.title[:60] }}</a></td>
+            <td>{{ job.organization[:30] }}</td>
+            <td>{{ job.category_rel.name if job.category_rel else '-' }}</td>
+            <td>{{ job.views or 0 }}</td>
+            <td>
+                {% if job.is_published %}
+                <span style="color: green;">Published</span>
+                {% else %}
+                <span style="color: red;">Draft</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('admin.edit_job', job_id=job.id) }}" class="btn btn-sm btn-outline">Edit</a>
+                <form action="{{ url_for('admin.generate_content', job_id=job.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-accent" title="Generate AI Content">AI</button>
+                </form>
+                <form action="{{ url_for('admin.delete_job', job_id=job.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Delete this job?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger">Del</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if jobs.pages > 1 %}
+    <div class="pagination">
+        {% if jobs.has_prev %}
+        <a href="{{ url_for('admin.jobs_list', page=jobs.prev_num) }}">← Prev</a>
+        {% endif %}
+        {% for p in jobs.iter_pages() %}
+            {% if p %}
+                <a href="{{ url_for('admin.jobs_list', page=p) }}" class="{% if p == jobs.page %}active{% endif %}">{{ p }}</a>
+            {% else %}
+                <span class="disabled">...</span>
+            {% endif %}
+        {% endfor %}
+        {% if jobs.has_next %}
+        <a href="{{ url_for('admin.jobs_list', page=jobs.next_num) }}">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

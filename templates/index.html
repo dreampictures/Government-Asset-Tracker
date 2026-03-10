@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}IndiaJobPortal - Latest Government Jobs, Sarkari Result, Admit Card 2026{% endblock %}
+{% block meta_description %}Find latest government jobs 2026 - SSC, UPSC, Railway, Bank, Police, Defence jobs. Get sarkari result, admit card, answer key updates daily.{% endblock %}
+
+{% block content %}
+<div class="hero-search">
+    <div class="container">
+        <h1>Find Your Dream Government Job</h1>
+        <p>Search from thousands of latest Sarkari Naukri across India</p>
+        <form class="search-box" action="{{ url_for('main.search') }}" method="GET">
+            <input type="text" name="q" placeholder="Search jobs by title, organization, department..." autocomplete="off">
+            <button type="submit">Search Jobs</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    {% if latest_jobs %}
+    <div class="section">
+        <div class="section-header">
+            <h2>📋 Latest Jobs</h2>
+            <a href="{{ url_for('main.jobs_by_type', job_type='latest_jobs') }}" class="view-all">View All →</a>
+        </div>
+        <div class="job-grid">
+            {% for job in latest_jobs %}
+            <div class="job-card">
+                {% if job.views %}<span class="badge-views">👁 {{ job.views }}</span>{% endif %}
+                <h3><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></h3>
+                <div class="org">{{ job.organization }}</div>
+                <div class="meta">
+                    {% if job.total_posts %}<span>📊 {{ job.total_posts }} Posts</span>{% endif %}
+                    {% if job.start_date %}<span>📅 {{ job.start_date }}</span>{% endif %}
+                    {% if job.last_date %}<span>⏰ Last: {{ job.last_date }}</span>{% endif %}
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('main.job_detail', slug=job.slug) }}" class="btn btn-primary btn-sm">View Details</a>
+                    {% if job.apply_link %}<a href="{{ job.apply_link }}" class="btn btn-accent btn-sm" target="_blank" rel="noopener">Apply Now</a>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if trending_jobs %}
+    <div class="section">
+        <div class="section-header">
+            <h2>🔥 Trending Jobs</h2>
+        </div>
+        <div class="job-grid">
+            {% for job in trending_jobs %}
+            <div class="job-card" style="border-left-color: #ff6f00;">
+                <span class="badge-views">🔥 {{ job.views or 0 }} views</span>
+                <h3><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></h3>
+                <div class="org">{{ job.organization }}</div>
+                <div class="meta">
+                    {% if job.total_posts %}<span>📊 {{ job.total_posts }} Posts</span>{% endif %}
+                    {% if job.last_date %}<span>⏰ {{ job.last_date }}</span>{% endif %}
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('main.job_detail', slug=job.slug) }}" class="btn btn-primary btn-sm">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if popular_jobs %}
+    <div class="section">
+        <div class="section-header">
+            <h2>⭐ Popular Jobs</h2>
+        </div>
+        <div class="job-grid">
+            {% for job in popular_jobs %}
+            <div class="job-card" style="border-left-color: #2e7d32;">
+                <span class="badge-views">⭐ {{ job.views or 0 }} views</span>
+                <h3><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></h3>
+                <div class="org">{{ job.organization }}</div>
+                <div class="meta">
+                    {% if job.total_posts %}<span>📊 {{ job.total_posts }} Posts</span>{% endif %}
+                    {% if job.last_date %}<span>⏰ {{ job.last_date }}</span>{% endif %}
+                    {% if job.state %}<span>📍 {{ job.state }}</span>{% endif %}
+                </div>
+                <div class="actions">
+                    <a href="{{ url_for('main.job_detail', slug=job.slug) }}" class="btn btn-success btn-sm">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <div class="section-header">
+            <h2>📂 Job Categories</h2>
+        </div>
+        <div class="category-grid">
+            {% set icons = {'central-govt-jobs': '🏛️', 'state-govt-jobs': '🏢', 'bank-jobs': '🏦', 'railway-jobs': '🚂', 'police-jobs': '👮', 'defence-jobs': '🎖️', 'teaching-jobs': '📚', 'engineering-jobs': '⚙️', 'medical-jobs': '🏥'} %}
+            {% for cat in categories %}
+            <a href="{{ url_for('main.category_page', slug=cat.slug) }}" class="category-card">
+                <div class="icon">{{ icons.get(cat.slug, '📋') }}</div>
+                <h3>{{ cat.name }}</h3>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        {% if admit_cards %}
+        <div class="section">
+            <div class="section-header">
+                <h2>📝 Admit Cards</h2>
+                <a href="{{ url_for('main.jobs_by_type', job_type='admit_card') }}" class="view-all">View All →</a>
+            </div>
+            <table class="job-table">
+                <thead><tr><th>Title</th><th>Last Date</th></tr></thead>
+                <tbody>
+                {% for job in admit_cards %}
+                <tr>
+                    <td><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></td>
+                    <td>{{ job.last_date or '-' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if results %}
+        <div class="section">
+            <div class="section-header">
+                <h2>📊 Results</h2>
+                <a href="{{ url_for('main.jobs_by_type', job_type='result') }}" class="view-all">View All →</a>
+            </div>
+            <table class="job-table">
+                <thead><tr><th>Title</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for job in results %}
+                <tr>
+                    <td><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></td>
+                    <td>{{ job.start_date or '-' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        {% if answer_keys %}
+        <div class="section">
+            <div class="section-header">
+                <h2>🔑 Answer Keys</h2>
+                <a href="{{ url_for('main.jobs_by_type', job_type='answer_key') }}" class="view-all">View All →</a>
+            </div>
+            <table class="job-table">
+                <thead><tr><th>Title</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for job in answer_keys %}
+                <tr>
+                    <td><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></td>
+                    <td>{{ job.start_date or '-' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if syllabus %}
+        <div class="section">
+            <div class="section-header">
+                <h2>📖 Syllabus</h2>
+                <a href="{{ url_for('main.jobs_by_type', job_type='syllabus') }}" class="view-all">View All →</a>
+            </div>
+            <table class="job-table">
+                <thead><tr><th>Title</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for job in syllabus %}
+                <tr>
+                    <td><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></td>
+                    <td>{{ job.start_date or '-' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        {% if admissions %}
+        <div class="section">
+            <div class="section-header">
+                <h2>🎓 Admissions</h2>
+                <a href="{{ url_for('main.jobs_by_type', job_type='admission') }}" class="view-all">View All →</a>
+            </div>
+            <table class="job-table">
+                <thead><tr><th>Title</th><th>Last Date</th></tr></thead>
+                <tbody>
+                {% for job in admissions %}
+                <tr>
+                    <td><a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }}</a></td>
+                    <td>{{ job.last_date or '-' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>📍 Jobs by State</h2>
+        </div>
+        <div class="state-grid">
+            {% for slug, name in get_top_states() %}
+            <a href="{{ url_for('main.state_page', slug=slug) }}" class="state-card">📍 {{ name }} Govt Jobs</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>🎓 Jobs by Qualification</h2>
+        </div>
+        <div class="qual-grid">
+            {% for slug, name in get_qualifications() %}
+            <a href="{{ url_for('main.qualification_page', slug=slug) }}" class="qual-card">🎓 {{ name }} Jobs</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="subscribe-widget" style="max-width: 600px; margin: 0 auto;">
+            <h3 style="border-bottom: none;">📧 Subscribe to Job Alerts</h3>
+            <p>Get latest government job notifications directly in your email</p>
+            <form action="{{ url_for('main.subscribe') }}" method="POST" id="subscribe-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="email" name="email" placeholder="Enter your email address" required>
+                <button type="submit">Subscribe Now</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

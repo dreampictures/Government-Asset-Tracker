@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IndiaJobPortal - Government Jobs, Sarkari Result, Admit Card{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}IndiaJobPortal - Find latest government jobs, sarkari results, admit cards, answer keys across India. Updated daily with new vacancies.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}government jobs, sarkari result, sarkari naukri, free job alert, admit card, answer key, railway jobs, bank jobs, SSC, UPSC{% endblock %}">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.url }}">
+    <meta property="og:title" content="{% block og_title %}IndiaJobPortal{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Find latest government jobs across India{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+    {% block schema %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "IndiaJobPortal",
+        "url": "{{ request.host_url }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ request.host_url }}search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+    {% endblock %}
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <span>India's #1 Government Job Portal</span>
+            <div>
+                <a href="{{ url_for('main.search') }}">Advanced Search</a>
+                <a href="{{ url_for('admin.login') }}">Admin</a>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand">
+                IndiaJob<span>Portal</span>
+            </a>
+            <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                <li><a href="{{ url_for('main.jobs_by_type', job_type='latest_jobs') }}">Latest Jobs</a></li>
+                <li><a href="{{ url_for('main.jobs_by_type', job_type='admit_card') }}">Admit Card</a></li>
+                <li><a href="{{ url_for('main.jobs_by_type', job_type='result') }}">Results</a></li>
+                <li><a href="{{ url_for('main.jobs_by_type', job_type='answer_key') }}">Answer Key</a></li>
+                <li class="nav-dropdown">
+                    <a href="#">Categories ▾</a>
+                    <div class="dropdown-menu">
+                        {% for cat in get_categories() %}
+                        <a href="{{ url_for('main.category_page', slug=cat.slug) }}">{{ cat.name }}</a>
+                        {% endfor %}
+                    </div>
+                </li>
+                <li class="nav-dropdown">
+                    <a href="#">By State ▾</a>
+                    <div class="dropdown-menu">
+                        {% for slug, name in get_top_states() %}
+                        <a href="{{ url_for('main.state_page', slug=slug) }}">{{ name }} Jobs</a>
+                        {% endfor %}
+                    </div>
+                </li>
+                <li class="nav-dropdown">
+                    <a href="#">Qualification ▾</a>
+                    <div class="dropdown-menu">
+                        {% for slug, name in get_qualifications() %}
+                        <a href="{{ url_for('main.qualification_page', slug=slug) }}">{{ name }} Jobs</a>
+                        {% endfor %}
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    {% if ticker_jobs is defined and ticker_jobs %}
+    <div class="ticker-wrap">
+        <div class="container" style="overflow: hidden; display: flex; align-items: center;">
+            <span class="ticker-label">LATEST</span>
+            <div class="ticker">
+                {% for job in ticker_jobs %}
+                <a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }} | </a>
+                {% endfor %}
+                {% for job in ticker_jobs %}
+                <a href="{{ url_for('main.job_detail', slug=job.slug) }}">{{ job.title }} | </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h4>IndiaJobPortal</h4>
+                    <p style="font-size: 13px; margin-bottom: 10px;">Your trusted source for latest government job notifications, results, and admit cards across India.</p>
+                </div>
+                <div>
+                    <h4>Job Categories</h4>
+                    <ul>
+                        {% for cat in get_categories() %}
+                        <li><a href="{{ url_for('main.category_page', slug=cat.slug) }}">{{ cat.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.jobs_by_type', job_type='latest_jobs') }}">Latest Jobs</a></li>
+                        <li><a href="{{ url_for('main.jobs_by_type', job_type='admit_card') }}">Admit Cards</a></li>
+                        <li><a href="{{ url_for('main.jobs_by_type', job_type='result') }}">Results</a></li>
+                        <li><a href="{{ url_for('main.jobs_by_type', job_type='answer_key') }}">Answer Keys</a></li>
+                        <li><a href="{{ url_for('main.search') }}">Advanced Search</a></li>
+                        <li><a href="{{ url_for('main.sitemap') }}">Sitemap</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Jobs by Qualification</h4>
+                    <ul>
+                        {% for slug, name in get_qualifications() %}
+                        <li><a href="{{ url_for('main.qualification_page', slug=slug) }}">{{ name }} Jobs</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 IndiaJobPortal. All rights reserved. | For informational purposes only.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

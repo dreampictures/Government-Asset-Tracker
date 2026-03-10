@@ -1,0 +1,52 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Manage Subscribers{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Manage Subscribers</h1>
+    <span style="color: #666;">{{ subscribers.total }} subscribers</span>
+</div>
+
+<div class="form-card">
+    <table class="job-table">
+        <thead>
+            <tr><th>#</th><th>Email</th><th>Status</th><th>Subscribed On</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+        {% for sub in subscribers.items %}
+        <tr>
+            <td>{{ sub.id }}</td>
+            <td>{{ sub.email }}</td>
+            <td>{% if sub.is_active %}<span style="color: green;">Active</span>{% else %}<span style="color: red;">Inactive</span>{% endif %}</td>
+            <td>{{ sub.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+                <form action="{{ url_for('admin.delete_subscriber', sub_id=sub.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Remove this subscriber?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if subscribers.pages > 1 %}
+    <div class="pagination">
+        {% if subscribers.has_prev %}
+        <a href="{{ url_for('admin.subscribers_list', page=subscribers.prev_num) }}">← Prev</a>
+        {% endif %}
+        {% for p in subscribers.iter_pages() %}
+            {% if p %}
+                <a href="{{ url_for('admin.subscribers_list', page=p) }}" class="{% if p == subscribers.page %}active{% endif %}">{{ p }}</a>
+            {% else %}
+                <span class="disabled">...</span>
+            {% endif %}
+        {% endfor %}
+        {% if subscribers.has_next %}
+        <a href="{{ url_for('admin.subscribers_list', page=subscribers.next_num) }}">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
