@@ -1,7 +1,5 @@
 import os
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests as http_requests
 from flask import Blueprint, jsonify, request
 from models import db, Job, Category, Subscriber, INDIAN_STATES, QUALIFICATIONS
 
@@ -72,13 +70,11 @@ def subscribe():
 
 
 def send_email_alerts(job):
-    smtp_server = os.environ.get('SMTP_SERVER', '')
-    smtp_port = int(os.environ.get('SMTP_PORT', 587))
-    smtp_username = os.environ.get('SMTP_USERNAME', '')
-    smtp_password = os.environ.get('SMTP_PASSWORD', '')
-    from_email = os.environ.get('SMTP_FROM_EMAIL', 'noreply@indiajobportal.com')
+    resend_api_key = os.environ.get('RESEND_API_KEY', '')
+    from_email = os.environ.get('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
 
-    if not smtp_server or not smtp_username:
+    if not resend_api_key:
+        print("Resend API key not configured. Skipping email alerts.")
         return
 
     subscribers = Subscriber.query.filter_by(is_active=True).all()
@@ -90,7 +86,7 @@ def send_email_alerts(job):
     <html>
     <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #1a237e; color: white; padding: 20px; text-align: center;">
-            <h1 style="margin: 0;">🔔 New Job Alert</h1>
+            <h1 style="margin: 0;">New Job Alert</h1>
         </div>
         <div style="padding: 20px; background: #f5f5f5;">
             <h2 style="color: #1a237e;">{job.title}</h2>
@@ -111,19 +107,25 @@ def send_email_alerts(job):
     </html>
     """
 
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-
-        for sub in subscribers:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = from_email
-            msg['To'] = sub.email
-            msg.attach(MIMEText(html_body, 'html'))
-            server.sendmail(from_email, sub.email, msg.as_string())
-
-        server.quit()
-    except Exception as e:
-        print(f"Email error: {e}")
+    for sub in subscribers:
+        try:
+            response = http_requests.post(
+                'https://api.resend.com/emails',
+                headers={
+                    'Authorization': f'Bearer {resend_api_key}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'from': from_email,
+                    'to': [sub.email],
+                    'subject': subject,
+                    'html': html_body
+                },
+                timeout=10
+            )
+            if response.status_code in (200, 201):
+                print(f"Email sent to {sub.email}")
+            else:
+                print(f"Email error for {sub.email}: {response.text}")
+        except Exception as e:
+            print(f"Email error for {sub.email}: {e}")

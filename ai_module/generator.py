@@ -1,22 +1,40 @@
 import os
-from openai import OpenAI
+import requests
+import json
 
-AI_INTEGRATIONS_OPENAI_API_KEY = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY")
-AI_INTEGRATIONS_OPENAI_BASE_URL = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
+OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
 
 
-def get_openai_client():
-    return OpenAI(
-        api_key=AI_INTEGRATIONS_OPENAI_API_KEY,
-        base_url=AI_INTEGRATIONS_OPENAI_BASE_URL
-    )
+def generate_with_ollama(prompt, system_prompt=""):
+    try:
+        url = f"{OLLAMA_BASE_URL}/api/generate"
+        payload = {
+            "model": os.environ.get('OLLAMA_MODEL', 'llama3'),
+            "prompt": prompt,
+            "system": system_prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.7,
+                "num_predict": 4096
+            }
+        }
+        response = requests.post(url, json=payload, timeout=120)
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('response', '')
+        else:
+            print(f"Ollama error: {response.status_code} - {response.text}")
+            return None
+    except requests.exceptions.ConnectionError:
+        print("Ollama not available. Using template-based content generation.")
+        return None
+    except Exception as e:
+        print(f"Ollama error: {e}")
+        return None
 
 
 def generate_job_article(job):
-    try:
-        client = get_openai_client()
-
-        prompt = f"""Write a detailed SEO-optimized job article in HTML format for the following government job posting. 
+    prompt = f"""Write a detailed SEO-optimized job article in HTML format for the following government job posting. 
 Include these sections with proper HTML headings (h2, h3) and structured content:
 
 1. Introduction - Brief overview of the recruitment
@@ -48,23 +66,13 @@ Write in professional, informative tone. Use proper HTML tags for formatting.
 Do NOT include html, head, or body tags - just the article content with headings and paragraphs.
 Make the content detailed and helpful for job seekers."""
 
-        # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-        # do not change this unless explicitly requested by the user
-        response = client.chat.completions.create(
-            model="gpt-5-nano",
-            messages=[
-                {"role": "system", "content": "You are a professional content writer specializing in government job notifications and recruitment articles for Indian job seekers. Write clear, detailed, and SEO-optimized content."},
-                {"role": "user", "content": prompt}
-            ],
-            max_completion_tokens=4096
-        )
+    system_prompt = "You are a professional content writer specializing in government job notifications and recruitment articles for Indian job seekers. Write clear, detailed, and SEO-optimized content in HTML format."
 
-        content = response.choices[0].message.content
-        return content if content else None
+    content = generate_with_ollama(prompt, system_prompt)
+    if content:
+        return content
 
-    except Exception as e:
-        print(f"AI content generation error: {e}")
-        return generate_fallback_article(job)
+    return generate_fallback_article(job)
 
 
 def generate_fallback_article(job):
