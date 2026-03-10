@@ -1,0 +1,234 @@
+Analyze the structure and functionality of the website FreeJobAlert.com and build a similar job portal system.
+
+IMPORTANT RULES
+
+Do NOT copy the UI or design of FreeJobAlert.
+Create a completely new modern UI design.
+
+However, the system logic, content structure, and job portal workflow should work similarly to FreeJobAlert.
+
+The goal is to build a modern automated government job portal that functions like FreeJobAlert but with a unique interface.
+
+TECH STACK
+
+Backend: Python Flask
+Frontend: HTML, CSS, JavaScript
+Database: PostgreSQL
+Deployment target: Fly.io
+
+CORE FUNCTIONALITY
+
+The system should work as a government job notification portal that collects job notifications and publishes structured job pages.
+
+MAIN WEBSITE STRUCTURE
+
+Homepage sections:
+
+Latest Jobs
+Trending Jobs
+Popular Jobs
+Admit Cards
+Results
+Answer Keys
+Syllabus
+Admissions
+
+Each section should automatically display data from the database.
+
+JOB DETAIL SYSTEM
+
+Each job must have a full detail page similar to FreeJobAlert structure.
+
+Sections required:
+
+Introduction
+Important Dates
+Application Fee
+Age Limit
+Vacancy Details
+Eligibility
+Salary
+Selection Process
+How to Apply
+Important Links
+
+These sections should be automatically generated from job data.
+
+CATEGORIES
+
+Create category pages similar to government job portals:
+
+Central Government Jobs
+State Government Jobs
+Bank Jobs
+Railway Jobs
+Police Jobs
+Defence Jobs
+Teaching Jobs
+Engineering Jobs
+Medical Jobs
+
+STATE JOB PAGES
+
+Create state-wise job listing pages such as:
+
+/state/punjab-govt-jobs
+/state/up-govt-jobs
+/state/bihar-govt-jobs
+/state/haryana-govt-jobs
+
+These pages should automatically show jobs filtered by state.
+
+QUALIFICATION JOB PAGES
+
+Create pages such as:
+
+/qualification/10th-pass-jobs
+/qualification/12th-pass-jobs
+/qualification/graduation-jobs
+/qualification/iti-jobs
+/qualification/diploma-jobs
+
+These pages should automatically filter jobs based on qualification.
+
+DATABASE STRUCTURE
+
+Use PostgreSQL with tables:
+
+jobs
+categories
+users
+subscribers
+notifications
+
+Jobs table must include fields:
+
+id
+title
+slug
+organization
+department
+category
+state
+qualification
+total_posts
+salary
+application_fee
+age_limit
+start_date
+last_date
+apply_link
+notification_link
+description
+views
+created_at
+
+TRENDING AND POPULAR JOB SYSTEM
+
+Trending jobs should show recently updated jobs.
+
+Popular jobs should be based on job page view counts.
+
+Increase view count every time a job page is opened.
+
+ADMIN PANEL
+
+Create a secure admin dashboard where admin can:
+
+Add job
+Edit job
+Delete job
+Upload notification PDF
+Select category
+Select state
+Select qualification
+
+AUTO JOB SCRAPER
+
+Create a scraper module using:
+
+requests
+BeautifulSoup
+
+The scraper should collect job information from government websites and store it in the database.
+
+Run the scraper automatically once per day.
+
+AI CONTENT GENERATION
+
+Use free open-source AI models with Ollama and Llama3 to convert job data into structured SEO articles.
+
+The article should automatically fill sections such as introduction, eligibility, vacancy details, and application process.
+
+TELEGRAM JOB ALERT SYSTEM
+
+Create a Telegram bot that automatically posts job alerts when new jobs are added.
+
+EMAIL ALERT SYSTEM
+
+Allow users to subscribe to job alerts and receive notifications when new jobs are published.
+
+SEO SYSTEM
+
+Create SEO optimized URLs:
+
+/job/job-title
+/category/category-name
+/state/state-name
+/qualification/qualification-name
+
+Automatically generate:
+
+sitemap.xml
+robots.txt
+meta tags
+schema markup
+
+PERFORMANCE
+
+Optimize for:
+
+Fast loading
+Mobile responsiveness
+Lazy loading
+Caching for state and qualification pages
+
+UI REQUIREMENTS
+
+Design a modern interface using card layouts and clean typography.
+
+The UI must be unique and not similar to FreeJobAlert design.
+
+Focus on usability, readability, and mobile experience.
+
+FINAL GOAL
+
+Build a modern automated job portal system that functions like FreeJobAlert but uses a completely unique design and modern interface.
+
+IMPORTANT COST REQUIREMENT
+
+This project must use only FREE or open-source services.
+
+Do not use any paid APIs or services.
+
+Allowed free tools:
+
+Database:
+Use Neon free PostgreSQL.
+
+AI generation:
+Use Ollama with Llama3 open-source model only.
+Do NOT use OpenAI or any paid AI APIs.
+
+Email system:
+Use Resend free tier only.
+
+Telegram alerts:
+Use Telegram Bot API (free).
+
+Hosting:
+The project should be deployable on Fly.io but should not require paid services beyond basic hosting.
+
+Avoid any service that requires monthly subscription or payment.
+
+All components must work using free tiers or open-source software.
