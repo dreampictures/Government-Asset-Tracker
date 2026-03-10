@@ -93,9 +93,12 @@ class Subscriber(db.Model):
 class Notification(db.Model):
     __tablename__ = 'notifications'
     id = db.Column(db.Integer, primary_key=True)
-    job_id = db.Column(db.Integer, db.ForeignKey('jobs.id'))
-    type = db.Column(db.String(50), default='email')
-    status = db.Column(db.String(50), default='pending')
+    title = db.Column(db.String(300), nullable=False, default='')
+    message = db.Column(db.Text, default='')
+    type = db.Column(db.String(50), default='system')
+    file_path = db.Column(db.String(500), default='')
+    job_id = db.Column(db.Integer, db.ForeignKey('jobs.id', ondelete='SET NULL'), nullable=True)
+    status = db.Column(db.String(50), default='active')
     sent_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     job = db.relationship('Job', backref='notifications')

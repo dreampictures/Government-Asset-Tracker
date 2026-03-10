@@ -84,12 +84,9 @@
             <div class="form-group">
                 <label>Job Type</label>
                 <select name="job_type">
-                    <option value="latest_jobs">Latest Jobs</option>
-                    <option value="admit_card">Admit Card</option>
-                    <option value="result">Result</option>
-                    <option value="answer_key">Answer Key</option>
-                    <option value="syllabus">Syllabus</option>
-                    <option value="admission">Admission</option>
+                    {% for jt in job_types %}
+                    <option value="{{ jt }}" {% if jt == 'latest_jobs' %}selected{% endif %}>{{ jt.replace('_', ' ').title() }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="form-group">

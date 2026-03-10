@@ -5,6 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 from models import db, User, Category
 from config import Config
 from slugify import slugify
+from extensions import cache
 
 
 def create_app():
@@ -15,6 +16,7 @@ def create_app():
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
 
     db.init_app(app)
+    cache.init_app(app)
     csrf = CSRFProtect(app)
 
     login_manager = LoginManager()
@@ -58,10 +60,33 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _migrate_notifications_table()
         seed_data()
         setup_scheduler(app)
 
     return app
+
+
+def _migrate_notifications_table():
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+    if 'notifications' in inspector.get_table_names():
+        columns = [col['name'] for col in inspector.get_columns('notifications')]
+        with db.engine.begin() as conn:
+            if 'title' not in columns:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN title VARCHAR(300) NOT NULL DEFAULT ''"))
+            if 'message' not in columns:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN message TEXT DEFAULT ''"))
+            if 'file_path' not in columns:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN file_path VARCHAR(500) DEFAULT ''"))
+            try:
+                conn.execute(text("""
+                    ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_job_id_fkey;
+                    ALTER TABLE notifications ADD CONSTRAINT notifications_job_id_fkey
+                        FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE SET NULL;
+                """))
+            except Exception:
+                pass
 
 
 def seed_data():

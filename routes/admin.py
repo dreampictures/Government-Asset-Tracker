@@ -1,11 +1,23 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from functools import wraps
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from slugify import slugify
-from models import db, User, Job, Category, Subscriber, INDIAN_STATES, QUALIFICATIONS, JOB_TYPES
+from models import db, User, Job, Category, Subscriber, Notification, INDIAN_STATES, QUALIFICATIONS, JOB_TYPES
 from werkzeug.utils import secure_filename
+from extensions import cache
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+def admin_required(f):
+    @wraps(f)
+    @login_required
+    def decorated(*args, **kwargs):
+        if not current_user.is_admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
 
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
@@ -31,23 +43,25 @@ def logout():
 
 
 @admin_bp.route('/')
-@login_required
+@admin_required
 def dashboard():
     total_jobs = Job.query.count()
     total_subscribers = Subscriber.query.count()
     total_categories = Category.query.count()
+    total_notifications = Notification.query.count()
     recent_jobs = Job.query.order_by(Job.created_at.desc()).limit(10).all()
     scraped_jobs = Job.query.filter_by(is_scraped=True).order_by(Job.created_at.desc()).limit(10).all()
     return render_template('admin/dashboard.html',
                            total_jobs=total_jobs,
                            total_subscribers=total_subscribers,
                            total_categories=total_categories,
+                           total_notifications=total_notifications,
                            recent_jobs=recent_jobs,
                            scraped_jobs=scraped_jobs)
 
 
 @admin_bp.route('/jobs')
-@login_required
+@admin_required
 def jobs_list():
     page = request.args.get('page', 1, type=int)
     jobs = Job.query.order_by(Job.created_at.desc()).paginate(page=page, per_page=20)
@@ -55,7 +69,7 @@ def jobs_list():
 
 
 @admin_bp.route('/jobs/add', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def add_job():
     categories = Category.query.all()
     if request.method == 'POST':
@@ -119,6 +133,7 @@ def add_job():
         except Exception:
             pass
 
+        cache.clear()
         flash('Job added successfully!', 'success')
         return redirect(url_for('admin.jobs_list'))
 
@@ -127,7 +142,7 @@ def add_job():
 
 
 @admin_bp.route('/jobs/edit/<int:job_id>', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def edit_job(job_id):
     job = Job.query.get_or_404(job_id)
     categories = Category.query.all()
@@ -166,6 +181,7 @@ def edit_job(job_id):
         job.notification_link = notification_link
 
         db.session.commit()
+        cache.clear()
         flash('Job updated successfully!', 'success')
         return redirect(url_for('admin.jobs_list'))
 
@@ -174,24 +190,26 @@ def edit_job(job_id):
 
 
 @admin_bp.route('/jobs/delete/<int:job_id>', methods=['POST'])
-@login_required
+@admin_required
 def delete_job(job_id):
     job = Job.query.get_or_404(job_id)
+    Notification.query.filter_by(job_id=job_id).update({'job_id': None})
     db.session.delete(job)
     db.session.commit()
+    cache.clear()
     flash('Job deleted successfully!', 'success')
     return redirect(url_for('admin.jobs_list'))
 
 
 @admin_bp.route('/categories')
-@login_required
+@admin_required
 def categories_list():
     categories = Category.query.all()
     return render_template('admin/categories.html', categories=categories)
 
 
 @admin_bp.route('/categories/add', methods=['POST'])
-@login_required
+@admin_required
 def add_category():
     name = request.form.get('name', '').strip()
     if not name:
@@ -210,7 +228,7 @@ def add_category():
 
 
 @admin_bp.route('/categories/delete/<int:cat_id>', methods=['POST'])
-@login_required
+@admin_required
 def delete_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     db.session.delete(cat)
@@ -220,7 +238,7 @@ def delete_category(cat_id):
 
 
 @admin_bp.route('/subscribers')
-@login_required
+@admin_required
 def subscribers_list():
     page = request.args.get('page', 1, type=int)
     subscribers = Subscriber.query.order_by(Subscriber.created_at.desc()).paginate(page=page, per_page=20)
@@ -228,7 +246,7 @@ def subscribers_list():
 
 
 @admin_bp.route('/subscribers/delete/<int:sub_id>', methods=['POST'])
-@login_required
+@admin_required
 def delete_subscriber(sub_id):
     sub = Subscriber.query.get_or_404(sub_id)
     db.session.delete(sub)
@@ -238,7 +256,7 @@ def delete_subscriber(sub_id):
 
 
 @admin_bp.route('/generate-content/<int:job_id>', methods=['POST'])
-@login_required
+@admin_required
 def generate_content(job_id):
     job = Job.query.get_or_404(job_id)
     try:
@@ -256,15 +274,67 @@ def generate_content(job_id):
 
 
 @admin_bp.route('/run-scraper', methods=['POST'])
-@login_required
+@admin_required
 def run_scraper():
     try:
         from scraper.scraper import run_scraper as do_scrape
         count = do_scrape()
+        cache.clear()
         flash(f'Scraper completed! {count} new jobs added.', 'success')
     except Exception as e:
         flash(f'Scraper error: {str(e)}', 'error')
     return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/notifications')
+@admin_required
+def notifications_list():
+    page = request.args.get('page', 1, type=int)
+    notifications = Notification.query.order_by(Notification.created_at.desc()).paginate(page=page, per_page=20)
+    jobs = Job.query.order_by(Job.title).all()
+    return render_template('admin/notifications.html', notifications=notifications, jobs=jobs)
+
+
+@admin_bp.route('/notifications/add', methods=['POST'])
+@admin_required
+def add_notification():
+    title = request.form.get('title', '').strip()
+    if not title:
+        flash('Notification title is required.', 'error')
+        return redirect(url_for('admin.notifications_list'))
+
+    file_path = ''
+    if 'notification_file' in request.files:
+        file = request.files['notification_file']
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            upload_folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            file.save(os.path.join(upload_folder, filename))
+            file_path = f'/static/uploads/{filename}'
+
+    notification = Notification(
+        title=title,
+        message=request.form.get('message', ''),
+        type=request.form.get('type', 'system'),
+        file_path=file_path,
+        job_id=request.form.get('job_id', type=int) or None,
+        status='active'
+    )
+    db.session.add(notification)
+    db.session.commit()
+    flash('Notification added successfully!', 'success')
+    return redirect(url_for('admin.notifications_list'))
+
+
+@admin_bp.route('/notifications/delete/<int:notif_id>', methods=['POST'])
+@admin_required
+def delete_notification(notif_id):
+    notification = Notification.query.get_or_404(notif_id)
+    db.session.delete(notification)
+    db.session.commit()
+    flash('Notification deleted!', 'success')
+    return redirect(url_for('admin.notifications_list'))
 
 
 def datetime_now_ts():

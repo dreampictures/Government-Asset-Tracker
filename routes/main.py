@@ -3,6 +3,7 @@ from slugify import slugify
 from models import db, Job, Category, Subscriber, INDIAN_STATES, QUALIFICATIONS, JOB_TYPES
 from datetime import datetime
 import xml.etree.ElementTree as ET
+from extensions import cache
 
 main_bp = Blueprint('main', __name__)
 
@@ -11,6 +12,7 @@ QUAL_SLUGS = {slugify(q + ' jobs'): q for q in QUALIFICATIONS}
 
 
 @main_bp.route('/')
+@cache.cached(timeout=300, key_prefix='homepage')
 def index():
     latest_jobs = Job.query.filter_by(is_published=True, job_type='latest_jobs').order_by(Job.created_at.desc()).limit(12).all()
     trending_jobs = Job.query.filter_by(is_published=True).order_by(Job.updated_at.desc(), Job.views.desc()).limit(8).all()
@@ -54,6 +56,7 @@ def job_detail(slug):
 
 
 @main_bp.route('/category/<slug>')
+@cache.cached(timeout=600, query_string=True)
 def category_page(slug):
     category = Category.query.filter_by(slug=slug).first_or_404()
     page = request.args.get('page', 1, type=int)
@@ -64,6 +67,7 @@ def category_page(slug):
 
 
 @main_bp.route('/state/<slug>')
+@cache.cached(timeout=600, query_string=True)
 def state_page(slug):
     state_name = STATE_SLUGS.get(slug)
     if not state_name:
@@ -77,6 +81,7 @@ def state_page(slug):
 
 
 @main_bp.route('/qualification/<slug>')
+@cache.cached(timeout=600, query_string=True)
 def qualification_page(slug):
     qual_name = QUAL_SLUGS.get(slug)
     if not qual_name:
@@ -215,6 +220,7 @@ Disallow: /admin/
 
 
 @main_bp.route('/jobs/<job_type>')
+@cache.cached(timeout=600, query_string=True)
 def jobs_by_type(job_type):
     if job_type not in JOB_TYPES:
         from flask import abort

@@ -36,12 +36,13 @@ static/
 
 ## Features
 - **Homepage**: Latest Jobs, Trending Jobs, Popular Jobs, Admit Cards, Results, Answer Keys, Syllabus, Admissions
-- **Job Detail Pages**: SEO-optimized with structured data, breadcrumbs, view counter
+- **Job Detail Pages**: 10 structured sections (Introduction, Important Dates, Application Fee, Age Limit, Vacancy Details, Eligibility, Salary, Selection Process, How to Apply, Important Links) + SEO schema markup
 - **Categories**: Central Govt, State Govt, Bank, Railway, Police, Defence, Teaching, Engineering, Medical
 - **State-wise Pages**: `/state/<state-slug>` for each Indian state
 - **Qualification Pages**: `/qualification/<qual-slug>` for 10th Pass, 12th Pass, Graduation, ITI, Diploma, etc.
 - **Search & Filters**: By keyword, state, qualification, category, organization
-- **Admin Panel**: Add/edit/delete jobs, manage categories & subscribers, run scraper, generate AI content
+- **Admin Panel**: Add/edit/delete jobs, manage categories, subscribers & notifications, run scraper, generate AI content
+- **Caching**: Flask-Caching (SimpleCache) with 5-min TTL for homepage, 10-min TTL for category/state/qualification pages; auto-invalidated on admin changes
 - **Web Scraper**: Auto-scrapes from government job sites daily (APScheduler)
 - **AI Content Generator**: Uses Ollama/Llama3 (free) with template-based fallback
 - **Telegram Bot**: Sends job alerts to configured channel (free)

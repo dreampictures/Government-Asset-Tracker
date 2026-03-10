@@ -1,0 +1,130 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>🔔 Notifications</h1>
+</div>
+
+<div class="form-card" style="margin-bottom: 30px;">
+    <h2 style="margin-bottom: 15px; font-size: 18px;">Add Notification</h2>
+    <form method="POST" action="{{ url_for('admin.add_notification') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" name="title" class="form-control" required placeholder="Notification title">
+            </div>
+            <div class="form-group">
+                <label>Type</label>
+                <select name="type" class="form-control">
+                    <option value="system">System Alert</option>
+                    <option value="pdf_upload">PDF Upload</option>
+                    <option value="email">Email Notification</option>
+                    <option value="telegram">Telegram Alert</option>
+                    <option value="scraper">Scraper Update</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Message</label>
+            <textarea name="message" class="form-control" rows="3" placeholder="Notification details"></textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group">
+                <label>Related Job (optional)</label>
+                <select name="job_id" class="form-control">
+                    <option value="">-- None --</option>
+                    {% for job in jobs %}
+                    <option value="{{ job.id }}">{{ job.title[:80] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Attach PDF/File (optional)</label>
+                <input type="file" name="notification_file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Notification</button>
+    </form>
+</div>
+
+<div class="form-card">
+    <h2 style="margin-bottom: 15px; font-size: 18px;">Notification History</h2>
+    {% if notifications.items %}
+    <table class="job-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Related Job</th>
+                <th>File</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notif in notifications.items %}
+            <tr>
+                <td>
+                    <strong>{{ notif.title }}</strong>
+                    {% if notif.message %}
+                    <br><small style="color: #666;">{{ notif.message[:100] }}{% if notif.message|length > 100 %}...{% endif %}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if notif.type == 'system' %}🔧 System
+                    {% elif notif.type == 'pdf_upload' %}📄 PDF
+                    {% elif notif.type == 'email' %}📧 Email
+                    {% elif notif.type == 'telegram' %}📱 Telegram
+                    {% elif notif.type == 'scraper' %}🤖 Scraper
+                    {% else %}{{ notif.type }}{% endif %}
+                </td>
+                <td>
+                    {% if notif.job %}
+                    <a href="{{ url_for('admin.edit_job', job_id=notif.job.id) }}">{{ notif.job.title[:40] }}...</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if notif.file_path %}
+                    <a href="{{ notif.file_path }}" target="_blank" class="btn btn-sm btn-outline">📎 View</a>
+                    {% else %}-{% endif %}
+                </td>
+                <td>
+                    <span style="padding: 2px 8px; border-radius: 4px; font-size: 12px; background: {% if notif.status == 'active' %}#e8f5e9; color: #2e7d32;{% else %}#fafafa; color: #999;{% endif %}">
+                        {{ notif.status }}
+                    </span>
+                </td>
+                <td>{{ notif.created_at.strftime('%d %b %Y, %H:%M') if notif.created_at else '-' }}</td>
+                <td>
+                    <form action="{{ url_for('admin.delete_notification', notif_id=notif.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this notification?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if notifications.pages > 1 %}
+    <div class="pagination" style="margin-top: 20px; text-align: center;">
+        {% if notifications.has_prev %}
+        <a href="{{ url_for('admin.notifications_list', page=notifications.prev_num) }}" class="btn btn-sm btn-outline">&laquo; Previous</a>
+        {% endif %}
+        <span style="margin: 0 10px;">Page {{ notifications.page }} of {{ notifications.pages }}</span>
+        {% if notifications.has_next %}
+        <a href="{{ url_for('admin.notifications_list', page=notifications.next_num) }}" class="btn btn-sm btn-outline">Next &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <p style="color: #999; text-align: center; padding: 20px;">No notifications yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
