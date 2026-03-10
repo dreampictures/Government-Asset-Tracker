@@ -13,6 +13,8 @@ class Config:
     RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
     RESEND_FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
 
+    WHATSAPP_CHANNEL_URL = os.environ.get('WHATSAPP_CHANNEL_URL', '')
+
     OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
     OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3')
 

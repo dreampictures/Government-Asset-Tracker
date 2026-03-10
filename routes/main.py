@@ -219,6 +219,24 @@ Disallow: /admin/
     return Response(content, mimetype='text/plain')
 
 
+@main_bp.route('/latest-notifications')
+@cache.cached(timeout=300, query_string=True)
+def latest_notifications():
+    page = request.args.get('page', 1, type=int)
+    jobs = Job.query.filter_by(is_published=True).order_by(
+        Job.created_at.desc()
+    ).paginate(page=page, per_page=20)
+    type_names = {
+        'latest_jobs': 'New',
+        'admit_card': 'Admit Card',
+        'result': 'Result',
+        'answer_key': 'Answer Key',
+        'syllabus': 'Syllabus',
+        'admission': 'Admission'
+    }
+    return render_template('latest_notifications.html', jobs=jobs, type_names=type_names)
+
+
 @main_bp.route('/jobs/<job_type>')
 @cache.cached(timeout=600, query_string=True)
 def jobs_by_type(job_type):

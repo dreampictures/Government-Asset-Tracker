@@ -98,10 +98,12 @@
         </div>
         <div class="category-grid">
             {% set icons = {'central-govt-jobs': '🏛️', 'state-govt-jobs': '🏢', 'bank-jobs': '🏦', 'railway-jobs': '🚂', 'police-jobs': '👮', 'defence-jobs': '🎖️', 'teaching-jobs': '📚', 'engineering-jobs': '⚙️', 'medical-jobs': '🏥'} %}
+            {% set cat_counts = get_category_counts() %}
             {% for cat in categories %}
             <a href="{{ url_for('main.category_page', slug=cat.slug) }}" class="category-card">
                 <div class="icon">{{ icons.get(cat.slug, '📋') }}</div>
                 <h3>{{ cat.name }}</h3>
+                <span class="count-badge">{{ cat_counts.get(cat.slug, 0) }} {{ 'Job' if cat_counts.get(cat.slug, 0) == 1 else 'Jobs' }}</span>
             </a>
             {% endfor %}
         </div>
@@ -215,11 +217,50 @@
 
     <div class="section">
         <div class="section-header">
+            <h2>📝 Useful Resources</h2>
+        </div>
+        <div class="resource-grid">
+            <a href="https://testbook.com/free-mock-test" class="resource-card" target="_blank" rel="noopener">
+                <div class="resource-icon">📝</div>
+                <h3>SSC Mock Tests</h3>
+                <p>Free practice tests for SSC CGL, CHSL, MTS & more</p>
+            </a>
+            <a href="https://www.gradeup.co/free-mock-test" class="resource-card" target="_blank" rel="noopener">
+                <div class="resource-icon">🏦</div>
+                <h3>Bank Exam Mock Tests</h3>
+                <p>Practice tests for IBPS PO, SBI Clerk, RBI & more</p>
+            </a>
+            <a href="https://testbook.com/rrb-ntpc-mock-test" class="resource-card" target="_blank" rel="noopener">
+                <div class="resource-icon">🚂</div>
+                <h3>Railway Mock Tests</h3>
+                <p>Free tests for RRB NTPC, Group D, ALP exams</p>
+            </a>
+            <a href="https://www.upsc.gov.in" class="resource-card" target="_blank" rel="noopener">
+                <div class="resource-icon">🏛️</div>
+                <h3>UPSC Resources</h3>
+                <p>Official UPSC portal for Civil Services exam info</p>
+            </a>
+            <a href="https://testbook.com/defence-mock-test" class="resource-card" target="_blank" rel="noopener">
+                <div class="resource-icon">🎖️</div>
+                <h3>Defence Exam Tests</h3>
+                <p>Practice for CDS, NDA, AFCAT & defence exams</p>
+            </a>
+            <a href="https://currentaffairs.testbook.com" class="resource-card" target="_blank" rel="noopener">
+                <div class="resource-icon">📰</div>
+                <h3>Current Affairs</h3>
+                <p>Daily current affairs for all competitive exams</p>
+            </a>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
             <h2>📍 Jobs by State</h2>
         </div>
         <div class="state-grid">
+            {% set state_counts = get_state_counts() %}
             {% for slug, name in get_top_states() %}
-            <a href="{{ url_for('main.state_page', slug=slug) }}" class="state-card">📍 {{ name }} Govt Jobs</a>
+            <a href="{{ url_for('main.state_page', slug=slug) }}" class="state-card">📍 {{ name }} Govt Jobs ({{ state_counts.get(name, 0) }})</a>
             {% endfor %}
         </div>
     </div>
@@ -229,8 +270,9 @@
             <h2>🎓 Jobs by Qualification</h2>
         </div>
         <div class="qual-grid">
+            {% set qual_counts = get_qualification_counts() %}
             {% for slug, name in get_qualifications() %}
-            <a href="{{ url_for('main.qualification_page', slug=slug) }}" class="qual-card">🎓 {{ name }} Jobs</a>
+            <a href="{{ url_for('main.qualification_page', slug=slug) }}" class="qual-card">🎓 {{ name }} Jobs ({{ qual_counts.get(name, 0) }})</a>
             {% endfor %}
         </div>
     </div>

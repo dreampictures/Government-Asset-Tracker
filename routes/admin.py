@@ -223,6 +223,7 @@ def add_category():
     cat = Category(name=name, slug=slug, description=request.form.get('description', ''))
     db.session.add(cat)
     db.session.commit()
+    cache.clear()
     flash('Category added!', 'success')
     return redirect(url_for('admin.categories_list'))
 
@@ -233,6 +234,7 @@ def delete_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     db.session.delete(cat)
     db.session.commit()
+    cache.clear()
     flash('Category deleted!', 'success')
     return redirect(url_for('admin.categories_list'))
 

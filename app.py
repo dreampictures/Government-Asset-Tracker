@@ -52,10 +52,44 @@ def create_app():
             from models import QUALIFICATIONS
             return [(slugify(q + ' jobs'), q) for q in QUALIFICATIONS]
 
+        @cache.cached(timeout=300, key_prefix='job_counts_by_category')
+        def get_category_counts():
+            from models import Job
+            from sqlalchemy import func
+            rows = db.session.query(
+                Category.slug, func.count(Job.id)
+            ).outerjoin(Job, (Job.category_id == Category.id) & (Job.is_published == True)
+            ).group_by(Category.slug).all()
+            return {slug: cnt for slug, cnt in rows}
+
+        @cache.cached(timeout=300, key_prefix='job_counts_by_state')
+        def get_state_counts():
+            from models import Job
+            from sqlalchemy import func
+            rows = db.session.query(
+                Job.state, func.count(Job.id)
+            ).filter(Job.is_published == True
+            ).group_by(Job.state).all()
+            return {state: cnt for state, cnt in rows}
+
+        @cache.cached(timeout=300, key_prefix='job_counts_by_qualification')
+        def get_qualification_counts():
+            from models import Job
+            from sqlalchemy import func
+            rows = db.session.query(
+                Job.qualification, func.count(Job.id)
+            ).filter(Job.is_published == True
+            ).group_by(Job.qualification).all()
+            return {qual: cnt for qual, cnt in rows}
+
         return dict(
             get_categories=get_categories,
             get_top_states=get_top_states,
-            get_qualifications=get_qualifications
+            get_qualifications=get_qualifications,
+            get_category_counts=get_category_counts,
+            get_state_counts=get_state_counts,
+            get_qualification_counts=get_qualification_counts,
+            whatsapp_channel_url=app.config.get('WHATSAPP_CHANNEL_URL', '')
         )
 
     with app.app_context():
