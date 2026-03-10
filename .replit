@@ -5,3 +5,4 @@ channel = "stable-25_05"
 
 [agent]
 integrations = ["web_scraper:1.0.0", "flask_authentication:1.0.0", "python_database:1.0.0", "python_openai_ai_integrations:1.0.0"]
+expertMode = true
