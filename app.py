@@ -121,12 +121,28 @@ def _migrate_notifications_table():
                 """))
             except Exception:
                 pass
+    if 'jobs' in inspector.get_table_names():
+        job_columns = [col['name'] for col in inspector.get_columns('jobs')]
+        with db.engine.begin() as conn:
+            if 'eligibility' not in job_columns:
+                conn.execute(text("ALTER TABLE jobs ADD COLUMN eligibility TEXT DEFAULT ''"))
+
+
+ADMIN_USERNAME = '714752420017'
+ADMIN_PASSWORD = 'Ba@606368'
+ADMIN_EMAIL = 'admin@indiajobportal.com'
 
 
 def seed_data():
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin', email='admin@indiajobportal.com', is_admin=True)
-        admin.set_password('admin123')
+    admin = User.query.filter_by(is_admin=True).first()
+    if admin:
+        admin.username = ADMIN_USERNAME
+        admin.email = ADMIN_EMAIL
+        admin.set_password(ADMIN_PASSWORD)
+        db.session.commit()
+    else:
+        admin = User(username=ADMIN_USERNAME, email=ADMIN_EMAIL, is_admin=True)
+        admin.set_password(ADMIN_PASSWORD)
         db.session.add(admin)
         db.session.commit()
 

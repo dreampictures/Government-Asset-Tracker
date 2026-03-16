@@ -86,6 +86,14 @@ QUALIFICATION_KEYWORDS = {
     'B.Ed': ['b.ed', 'bed'],
 }
 
+JOB_TYPE_KEYWORDS = {
+    'admit_card': ['admit card', 'hall ticket', 'call letter', 'admit', 'e-admit'],
+    'result': ['result', 'results', 'merit list', 'final result', 'cut off', 'cutoff', 'selected candidates'],
+    'answer_key': ['answer key', 'answer sheet', 'provisional answer', 'final answer key', 'objection answer'],
+    'syllabus': ['syllabus', 'exam pattern', 'curriculum', 'study material'],
+    'admission': ['admission', 'counselling', 'counseling', 'seat allotment', 'mbbs admission', 'neet'],
+}
+
 
 def get_headers():
     return {
@@ -157,6 +165,15 @@ def detect_qualification(title):
     return ''
 
 
+def detect_job_type(title):
+    title_lower = title.lower()
+    for job_type, keywords in JOB_TYPE_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in title_lower:
+                return job_type
+    return 'latest_jobs'
+
+
 def enrich_job_data(job_data):
     title = job_data.get('title', '')
     if not job_data.get('last_date'):
@@ -169,6 +186,8 @@ def enrich_job_data(job_data):
         job_data['state'] = detect_state(title)
     if not job_data.get('qualification'):
         job_data['qualification'] = detect_qualification(title)
+    if not job_data.get('job_type') or job_data.get('job_type') == 'latest_jobs':
+        job_data['job_type'] = detect_job_type(title)
     return job_data
 
 
@@ -181,6 +200,69 @@ def extract_org_from_title(title):
         return parts[0].strip()
     words = title.split()
     return ' '.join(words[:3]) if len(words) > 3 else title
+
+
+def extract_detail_from_page(url):
+    """Try to fetch a job detail page and extract structured information."""
+    extra = {
+        'application_fee': '',
+        'age_limit': '',
+        'start_date': '',
+        'last_date': '',
+        'total_posts': '',
+        'selection_process': '',
+        'eligibility': '',
+        'notification_link': '',
+    }
+    if not url or not url.startswith('http'):
+        return extra
+    try:
+        response = safe_request(url, timeout=15)
+        if not response:
+            return extra
+        soup = BeautifulSoup(response.text, 'html.parser')
+        full_text = soup.get_text(separator=' ', strip=True)
+
+        fee_match = re.search(r'(?:application fee|fee)[^\d]*(?:rs\.?\s*)?(\d[\d,/\- ]+)', full_text, re.IGNORECASE)
+        if fee_match:
+            extra['application_fee'] = fee_match.group(0)[:200]
+
+        age_match = re.search(r'age\s*limit[^.]*?(\d{2}\s*(?:to|-)\s*\d{2,3}\s*years?)', full_text, re.IGNORECASE)
+        if age_match:
+            extra['age_limit'] = age_match.group(0)[:200]
+
+        posts_match = POST_COUNT_PATTERN.search(full_text)
+        if posts_match:
+            extra['total_posts'] = posts_match.group(1)
+
+        dates = []
+        for pattern in DATE_PATTERNS:
+            dates.extend(pattern.findall(full_text))
+        if len(dates) >= 2:
+            extra['start_date'] = dates[0]
+            extra['last_date'] = dates[-1]
+        elif len(dates) == 1:
+            extra['last_date'] = dates[0]
+
+        selection_match = re.search(r'selection\s*process[^\n.]*?([^\n.]{10,200})', full_text, re.IGNORECASE)
+        if selection_match:
+            extra['selection_process'] = selection_match.group(1).strip()[:300]
+
+        qual_match = re.search(r'(?:eligibility|qualification)[^\n.]*?([^\n.]{10,300})', full_text, re.IGNORECASE)
+        if qual_match:
+            extra['eligibility'] = qual_match.group(1).strip()[:400]
+
+        pdf_links = soup.find_all('a', href=re.compile(r'\.pdf', re.IGNORECASE))
+        if pdf_links:
+            href = pdf_links[0].get('href', '')
+            if href and not href.startswith('http'):
+                from urllib.parse import urljoin
+                href = urljoin(url, href)
+            extra['notification_link'] = href
+
+    except Exception as e:
+        print(f"Detail extraction error for {url}: {e}")
+    return extra
 
 
 def scrape_sarkari_result():
@@ -198,16 +280,18 @@ def scrape_sarkari_result():
             title = link.get_text(strip=True)
             href = link.get('href', '')
             if title and href and len(title) > 10:
+                full_href = href if href.startswith('http') else f'https://www.sarkariresult.com/{href}'
                 job = {
                     'title': title,
                     'organization': extract_org_from_title(title),
-                    'apply_link': href if href.startswith('http') else f'https://www.sarkariresult.com/{href}',
+                    'apply_link': full_href,
                     'notification_link': '',
                     'last_date': '',
                     'total_posts': '',
                     'qualification': '',
                     'state': 'All India',
                     'category_slug': None,
+                    'job_type': 'latest_jobs',
                     'source': 'sarkariresult',
                 }
                 jobs.append(enrich_job_data(job))
@@ -246,6 +330,7 @@ def scrape_free_job_alert():
                             'qualification': '',
                             'state': 'All India',
                             'category_slug': None,
+                            'job_type': 'latest_jobs',
                             'source': 'freejobalert',
                         }
                         jobs.append(enrich_job_data(job))
@@ -268,17 +353,19 @@ def scrape_employment_news():
         for link in links[:20]:
             title = link.get_text(strip=True)
             href = link.get('href', '')
-            if title and len(title) > 15 and ('recruitment' in title.lower() or 'vacancy' in title.lower() or 'notification' in title.lower()):
+            if title and len(title) > 15 and any(kw in title.lower() for kw in ['recruitment', 'vacancy', 'notification', 'admit', 'result', 'answer key']):
+                full_href = href if href.startswith('http') else f'https://www.employmentnews.gov.in/{href}'
                 job = {
                     'title': title,
                     'organization': extract_org_from_title(title),
-                    'apply_link': href if href.startswith('http') else f'https://www.employmentnews.gov.in/{href}',
+                    'apply_link': full_href,
                     'notification_link': '',
                     'last_date': '',
                     'total_posts': '',
                     'qualification': '',
                     'state': 'All India',
                     'category_slug': None,
+                    'job_type': 'latest_jobs',
                     'source': 'employmentnews',
                 }
                 jobs.append(enrich_job_data(job))
@@ -314,16 +401,18 @@ def scrape_ncs_portal():
                                 last_date = extracted
                                 break
 
+                        full_href = href if href.startswith('http') else f'https://www.ncs.gov.in{href}'
                         job = {
                             'title': title,
                             'organization': extract_org_from_title(title),
-                            'apply_link': href if href.startswith('http') else f'https://www.ncs.gov.in{href}',
+                            'apply_link': full_href,
                             'notification_link': '',
                             'last_date': last_date,
                             'total_posts': '',
                             'qualification': '',
                             'state': 'All India',
                             'category_slug': None,
+                            'job_type': 'latest_jobs',
                             'source': 'ncs',
                         }
                         jobs.append(enrich_job_data(job))
@@ -333,17 +422,19 @@ def scrape_ncs_portal():
             for link in all_links[:25]:
                 title = link.get_text(strip=True)
                 href = link.get('href', '')
-                if title and len(title) > 15 and any(kw in title.lower() for kw in ['recruitment', 'vacancy', 'notification', 'posts', 'jobs']):
+                if title and len(title) > 15 and any(kw in title.lower() for kw in ['recruitment', 'vacancy', 'notification', 'posts', 'jobs', 'admit', 'result']):
+                    full_href = href if href.startswith('http') else f'https://www.ncs.gov.in{href}'
                     job = {
                         'title': title,
                         'organization': extract_org_from_title(title),
-                        'apply_link': href if href.startswith('http') else f'https://www.ncs.gov.in{href}',
+                        'apply_link': full_href,
                         'notification_link': '',
                         'last_date': extract_date(title),
                         'total_posts': '',
                         'qualification': '',
                         'state': 'All India',
                         'category_slug': None,
+                        'job_type': 'latest_jobs',
                         'source': 'ncs',
                     }
                     jobs.append(enrich_job_data(job))
@@ -364,7 +455,6 @@ def resolve_category_id(category_slug):
 
 def run_scraper():
     from models import db, Job
-    from flask import current_app
 
     all_jobs = []
     all_jobs.extend(scrape_sarkari_result())
@@ -374,32 +464,68 @@ def run_scraper():
 
     added = 0
     for job_data in all_jobs:
-        slug = slugify(job_data['title'])
+        title = job_data.get('title', '').strip()
+        if not title:
+            continue
+
+        slug = slugify(title)
         if not slug:
             continue
 
-        existing = Job.query.filter_by(slug=slug).first()
-        if existing:
+        existing_slug = Job.query.filter_by(slug=slug).first()
+        if existing_slug:
             continue
+
+        apply_link = job_data.get('apply_link', '')
+        if apply_link:
+            existing_link = Job.query.filter_by(apply_link=apply_link).first()
+            if existing_link:
+                continue
+
+        extra = {}
+        if apply_link and apply_link.startswith('http'):
+            extra = extract_detail_from_page(apply_link)
+
+        notification_link = extra.get('notification_link') or job_data.get('notification_link', '')
+        start_date = extra.get('start_date') or job_data.get('start_date', '')
+        last_date = extra.get('last_date') or job_data.get('last_date', '')
+        total_posts = extra.get('total_posts') or job_data.get('total_posts', '')
+        application_fee = extra.get('application_fee', '')
+        age_limit = extra.get('age_limit', '')
+        selection_process = extra.get('selection_process', '')
+        eligibility = extra.get('eligibility', '')
 
         category_id = resolve_category_id(job_data.get('category_slug'))
 
         job = Job(
-            title=job_data['title'],
+            title=title,
             slug=slug,
             organization=job_data.get('organization', ''),
-            apply_link=job_data.get('apply_link', ''),
-            notification_link=job_data.get('notification_link', ''),
-            last_date=job_data.get('last_date', ''),
-            total_posts=job_data.get('total_posts', ''),
+            apply_link=apply_link,
+            notification_link=notification_link,
+            start_date=start_date,
+            last_date=last_date,
+            total_posts=total_posts,
+            application_fee=application_fee,
+            age_limit=age_limit,
+            selection_process=selection_process,
+            eligibility=eligibility,
             qualification=job_data.get('qualification', ''),
             state=job_data.get('state', 'All India'),
             category_id=category_id,
+            job_type=job_data.get('job_type', 'latest_jobs'),
             is_scraped=True,
             is_published=True,
-            job_type='latest_jobs',
         )
         db.session.add(job)
+        db.session.flush()
+
+        try:
+            from ai_module.generator import generate_fallback_article
+            job.description = generate_fallback_article(job)
+        except Exception:
+            pass
+
         added += 1
 
     if added > 0:

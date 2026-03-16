@@ -106,6 +106,7 @@ def add_job():
             salary=request.form.get('salary', ''),
             application_fee=request.form.get('application_fee', ''),
             age_limit=request.form.get('age_limit', ''),
+            eligibility=request.form.get('eligibility', ''),
             selection_process=request.form.get('selection_process', ''),
             start_date=request.form.get('start_date', ''),
             last_date=request.form.get('last_date', ''),
@@ -158,6 +159,7 @@ def edit_job(job_id):
         job.salary = request.form.get('salary', '')
         job.application_fee = request.form.get('application_fee', '')
         job.age_limit = request.form.get('age_limit', '')
+        job.eligibility = request.form.get('eligibility', '')
         job.selection_process = request.form.get('selection_process', '')
         job.start_date = request.form.get('start_date', '')
         job.last_date = request.form.get('last_date', '')

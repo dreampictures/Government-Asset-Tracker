@@ -73,6 +73,7 @@ class Job(db.Model):
     official_website = db.Column(db.String(500), default='')
     description = db.Column(db.Text, default='')
     how_to_apply = db.Column(db.Text, default='')
+    eligibility = db.Column(db.Text, default='')
     vacancy_details = db.Column(db.Text, default='')
     job_type = db.Column(db.String(50), default='latest_jobs')
     views = db.Column(db.Integer, default=0)

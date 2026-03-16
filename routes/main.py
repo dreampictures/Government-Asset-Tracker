@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, url_for, Response
+from flask import Blueprint, render_template, request, url_for, Response, redirect
 from slugify import slugify
 from models import db, Job, Category, Subscriber, INDIAN_STATES, QUALIFICATIONS, JOB_TYPES
 from datetime import datetime
@@ -207,6 +207,11 @@ def sitemap():
     return Response(xml_content, mimetype='application/xml')
 
 
+@main_bp.route('/admin-login', methods=['GET', 'POST'])
+def admin_login_redirect():
+    return redirect(url_for('admin.login'), 302)
+
+
 @main_bp.route('/robots.txt')
 def robots():
     content = f"""User-agent: *
@@ -215,6 +220,7 @@ Allow: /
 Sitemap: {url_for('main.sitemap', _external=True)}
 
 Disallow: /admin/
+Disallow: /admin-login
 """
     return Response(content, mimetype='text/plain')
 
