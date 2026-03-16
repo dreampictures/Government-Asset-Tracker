@@ -22,3 +22,9 @@ urllib3==2.6.3
 soupsieve==2.8.3
 greenlet==3.3.2
 typing_extensions==4.15.0
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
+slugify
