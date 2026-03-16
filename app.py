@@ -377,16 +377,36 @@ def setup_scheduler(app):
         from apscheduler.schedulers.background import BackgroundScheduler
         scheduler = BackgroundScheduler()
 
-        def scheduled_scrape():
+        def quick_scan():
             with app.app_context():
                 try:
-                    from scraper.scraper import run_scraper
-                    run_scraper()
+                    from scrapers import run_quick_scan
+                    count = run_quick_scan()
+                    if count > 0:
+                        from extensions import cache
+                        cache.clear()
+                    print(f"Scheduled quick scan: {count} new jobs")
                 except Exception as e:
-                    print(f"Scheduled scraper error: {e}")
+                    print(f"Quick scan error: {e}")
 
-        scheduler.add_job(func=scheduled_scrape, trigger='interval', hours=24, id='daily_scraper')
+        def deep_scan():
+            with app.app_context():
+                try:
+                    from scrapers import run_deep_scan
+                    count = run_deep_scan()
+                    if count > 0:
+                        from extensions import cache
+                        cache.clear()
+                    print(f"Scheduled deep scan: {count} new jobs")
+                except Exception as e:
+                    print(f"Deep scan error: {e}")
+
+        scheduler.add_job(func=quick_scan, trigger='interval', hours=3, id='quick_scan',
+                          misfire_grace_time=300)
+        scheduler.add_job(func=deep_scan, trigger='cron', hour=2, minute=0, id='deep_scan',
+                          misfire_grace_time=600)
         scheduler.start()
+        print("Scheduler started: quick scan every 3h, deep scan daily at 2 AM")
     except Exception as e:
         print(f"Scheduler setup error: {e}")
 

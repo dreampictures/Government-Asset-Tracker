@@ -49,6 +49,8 @@ def dashboard():
     total_subscribers = Subscriber.query.count()
     total_categories = Category.query.count()
     total_notifications = Notification.query.count()
+    scraped_count = Job.query.filter_by(is_scraped=True).count()
+    pending_count = Job.query.filter_by(is_scraped=True, is_published=False).count()
     recent_jobs = Job.query.order_by(Job.created_at.desc()).limit(10).all()
     scraped_jobs = Job.query.filter_by(is_scraped=True).order_by(Job.created_at.desc()).limit(10).all()
     return render_template('admin/dashboard.html',
@@ -56,6 +58,8 @@ def dashboard():
                            total_subscribers=total_subscribers,
                            total_categories=total_categories,
                            total_notifications=total_notifications,
+                           scraped_count=scraped_count,
+                           pending_count=pending_count,
                            recent_jobs=recent_jobs,
                            scraped_jobs=scraped_jobs)
 
@@ -280,14 +284,67 @@ def generate_content(job_id):
 @admin_bp.route('/run-scraper', methods=['POST'])
 @admin_required
 def run_scraper():
+    scan_type = request.form.get('scan_type', 'quick')
     try:
-        from scraper.scraper import run_scraper as do_scrape
-        count = do_scrape()
+        if scan_type == 'deep':
+            from scrapers import run_deep_scan
+            count = run_deep_scan()
+            label = 'Deep scan'
+        else:
+            from scrapers import run_quick_scan
+            count = run_quick_scan()
+            label = 'Quick scan'
         cache.clear()
-        flash(f'Scraper completed! {count} new jobs added.', 'success')
+        flash(f'{label} completed! {count} new jobs added.', 'success')
     except Exception as e:
         flash(f'Scraper error: {str(e)}', 'error')
     return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/scraped-jobs')
+@admin_required
+def scraped_jobs():
+    page = request.args.get('page', 1, type=int)
+    status_filter = request.args.get('status', 'all')
+    query = Job.query.filter_by(is_scraped=True)
+    if status_filter == 'published':
+        query = query.filter_by(is_published=True)
+    elif status_filter == 'draft':
+        query = query.filter_by(is_published=False)
+    jobs = query.order_by(Job.created_at.desc()).paginate(page=page, per_page=30)
+    return render_template('admin/scraped_jobs.html', jobs=jobs, status_filter=status_filter)
+
+
+@admin_bp.route('/scraped-jobs/toggle/<int:job_id>', methods=['POST'])
+@admin_required
+def toggle_scraped_job(job_id):
+    job = Job.query.get_or_404(job_id)
+    job.is_published = not job.is_published
+    db.session.commit()
+    cache.clear()
+    status = 'published' if job.is_published else 'unpublished'
+    flash(f'Job {status}: {job.title[:60]}', 'success')
+    return redirect(request.referrer or url_for('admin.scraped_jobs'))
+
+
+@admin_bp.route('/scraped-jobs/bulk-approve', methods=['POST'])
+@admin_required
+def bulk_approve_scraped():
+    Job.query.filter_by(is_scraped=True, is_published=False).update({'is_published': True})
+    db.session.commit()
+    cache.clear()
+    flash('All scraped jobs have been approved and published.', 'success')
+    return redirect(url_for('admin.scraped_jobs'))
+
+
+@admin_bp.route('/scraped-jobs/bulk-delete-bad', methods=['POST'])
+@admin_required
+def bulk_delete_bad_scraped():
+    count = Job.query.filter_by(is_scraped=True, is_published=False).delete()
+    db.session.commit()
+    cache.clear()
+    flash(f'{count} unpublished scraped jobs deleted.', 'success')
+    return redirect(url_for('admin.scraped_jobs'))
 
 
 @admin_bp.route('/notifications')

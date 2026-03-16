@@ -1,16 +1,17 @@
 # IndiaJobPortal - Government Job Portal
 
 ## Overview
-A fully automated All India Government Job Portal similar to Sarkari Result / FreeJobAlert. Built with Flask, PostgreSQL, and includes web scraping, AI content generation (Ollama/Llama3), Telegram alerts, and email subscriptions (Resend).
+A fully automated All India Government Job Portal similar to Sarkari Result / FreeJobAlert. Built with Flask, PostgreSQL, and includes modular web scraping, PDF extraction, AI content generation (Ollama/Llama3), Telegram alerts, and email subscriptions (Resend).
 
 ## Tech Stack
 - **Backend**: Python Flask
 - **Frontend**: HTML, CSS, JavaScript (no framework, vanilla)
 - **Database**: PostgreSQL (Replit built-in / Neon free tier for deployment)
-- **AI**: Ollama with Llama3 open-source model (free, self-hosted)
+- **AI**: Ollama with Llama3 open-source model (free, self-hosted) + template fallback
 - **Email**: Resend free tier (REST API)
 - **Telegram**: Telegram Bot API (free)
-- **Hosting**: Fly.io compatible
+- **PDF Extraction**: pdfminer.six + PyPDF2
+- **Scheduler**: APScheduler (quick scan every 3h, deep scan daily at 2 AM)
 
 ## Project Structure
 ```
@@ -19,76 +20,82 @@ config.py               - Configuration (secrets, DB, Ollama, Resend, WhatsApp)
 models.py               - SQLAlchemy models (Job, Category, User, Subscriber, Notification)
 extensions.py           - Flask extensions (db, login_manager, csrf, cache)
 routes/
-  main.py               - Public routes (home, job detail, category, state, qualification, search, latest-notifications, sitemap, robots.txt)
-  admin.py              - Admin panel routes (CRUD for jobs, categories, subscribers, notifications)
-  api.py                - API routes (search API, subscribe API, email alerts via Resend)
+  main.py               - Public routes (home, job detail, category, state, qualification, search)
+  admin.py              - Admin panel routes (CRUD, scraped jobs review, bulk approve)
+  api.py                - API routes (search, subscribe, email alerts)
 scraper/
-  scraper.py            - Enhanced web scraper (SarkariResult, FreeJobAlert, EmploymentNews, NCS Portal) with auto-categorization
+  scraper.py            - Wrapper entry point (calls new modular scrapers/)
+scrapers/               - Modular scraper system
+  __init__.py           - Main entry: run_quick_scan(), run_deep_scan(), run_all_scrapers()
+  base_scraper.py       - Base class with common utilities (detect category/state/type/qualification)
+  sarkariresult_scraper.py - SarkariResult.com scraper (latest, admit, result, answer key)
+  freejobalert_scraper.py  - FreeJobAlert.com scraper (notifications, admit, results)
+  ssc_scraper.py        - SSC official website scraper
+  upsc_scraper.py       - UPSC official website scraper
+  railway_scraper.py    - Railway (RRB/RRC) scraper
+  ibps_scraper.py       - IBPS banking recruitment scraper
+  pdf_extractor.py      - PDF download and text extraction (pdfminer.six / PyPDF2)
 ai_module/
-  generator.py          - AI content generator using Ollama/Llama3 (falls back to template-based generation)
+  generator.py          - AI content generator (Ollama/Llama3 + template fallback)
 telegram_bot/
   bot.py                - Telegram bot for job alerts
-templates/              - Jinja2 templates (base, index, job_detail, category, state, qualification, search, latest_notifications, admin/*)
+templates/              - Jinja2 templates (base, index, job_detail, category, state, qualification, search)
+  admin/                - Admin panel templates including scraped_jobs.html
 static/
-  css/style.css         - Main stylesheet (responsive, professional UI)
-  js/main.js            - JavaScript (navigation, lazy loading, flash messages)
+  css/style.css         - Main stylesheet
+  js/main.js            - JavaScript
   uploads/              - Uploaded notification PDFs
 ```
 
 ## Features
-- **Homepage**: Latest Jobs, Trending Jobs, Popular Jobs, Admit Cards, Results, Answer Keys, Syllabus, Admissions, Useful Resources (mock test links)
-- **Job Detail Pages**: 10 structured sections (Introduction, Important Dates, Application Fee, Age Limit, Vacancy Details, Eligibility, Salary, Selection Process, How to Apply, Important Links) + SEO schema markup
-- **Categories**: Central Govt, State Govt, Bank, Railway, Police, Defence, Teaching, Engineering, Medical — with live job counts
-- **State-wise Pages**: `/state/<state-slug>` for each Indian state — with live job counts
-- **Qualification Pages**: `/qualification/<qual-slug>` for 10th Pass, 12th Pass, Graduation, ITI, Diploma, etc. — with live job counts
-- **Latest Notifications Page**: `/latest-notifications` — all notifications with type badges, pagination (20/page), sidebar
+- **Auto Scraping**: 6 modular scrapers (SarkariResult, FreeJobAlert, SSC, UPSC, Railway, IBPS)
+- **Auto Scheduling**: Quick scan every 3 hours, deep scan daily at 2 AM with PDF extraction
+- **PDF Extraction**: Automatically downloads and parses notification PDFs for structured data
+- **Auto Job Type Detection**: Classifies as Latest Jobs, Admit Card, Result, Answer Key, Syllabus, Admission
+- **Duplicate Detection**: Checks slug + apply_link + notification_link before creating
+- **AI Content**: Auto-generates structured job articles using Ollama/Llama3 or template fallback
+- **Scraped Jobs Review**: Admin can approve/reject/bulk-approve scraped jobs
+- **Hidden Admin**: Admin accessible only via /admin-login (masked username input)
+- **Categories**: Central Govt, State Govt, Bank, Railway, Police, Defence, Teaching, Engineering, Medical
+- **State-wise / Qualification pages** with live job counts
 - **Search & Filters**: By keyword, state, qualification, category, organization
-- **Admin Panel**: Add/edit/delete jobs, manage categories, subscribers & notifications, run scraper, generate AI content
-- **Caching**: Flask-Caching (SimpleCache) with 5-min TTL for homepage, 10-min TTL for category/state/qualification pages; auto-invalidated on admin changes
-- **Web Scraper**: Enhanced auto-scraper from 4 government job sources (SarkariResult, FreeJobAlert, EmploymentNews, NCS Portal) with user-agent rotation, auto-categorization, richer data extraction (dates, post counts, state/qualification detection)
-- **AI Content Generator**: Uses Ollama/Llama3 (free) with template-based fallback
-- **Telegram Bot**: Sends job alerts to configured channel (free)
-- **WhatsApp Channel**: Floating action button + footer link for WhatsApp channel (configurable via env var)
-- **Email Subscription**: Resend free tier email alerts for new jobs
-- **SEO**: sitemap.xml, robots.txt, meta tags, schema.org structured data, SEO-friendly URLs
-- **View Counter**: Tracks job page views, powers Trending & Popular sections
-- **CSRF Protection**: All POST forms protected with Flask-WTF CSRF tokens
-- **Useful Resources**: Homepage section with links to free mock test platforms (SSC, Bank, Railway, UPSC, Defence, Current Affairs)
+- **SEO**: sitemap.xml, robots.txt, meta tags, schema.org structured data
+- **Telegram Bot**: Job alerts to configured channel
+- **Email Subscriptions**: Resend free tier
+- **View Counter**: Tracks job page views for trending/popular sections
+- **CSRF Protection**: All forms protected
 
-## Admin Credentials
-- Username: `admin`
-- Password: `admin123`
+## Admin Access
+- **URL**: `/admin-login` (hidden, not linked anywhere on the public site)
+- **Username**: `714752420017` (masked input)
+- **Password**: `Ba@606368`
+
+## Scheduler
+- Quick scan: Every 3 hours — SarkariResult + FreeJobAlert (fast, no PDF)
+- Deep scan: Daily at 2 AM — All 6 sources + PDF extraction
 
 ## Environment Variables
-- `DATABASE_URL` - PostgreSQL connection string (auto-set by Replit, or Neon free tier URL)
+- `DATABASE_URL` - PostgreSQL connection string
 - `SESSION_SECRET` - Flask session secret
-- `TELEGRAM_BOT_TOKEN` - Telegram bot token (optional, free)
-- `TELEGRAM_CHANNEL_ID` - Telegram channel ID (optional, free)
-- `RESEND_API_KEY` - Resend API key for email alerts (optional, free tier)
-- `RESEND_FROM_EMAIL` - Sender email address for Resend (default: onboarding@resend.dev)
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token (optional)
+- `TELEGRAM_CHANNEL_ID` - Telegram channel ID (optional)
+- `RESEND_API_KEY` - Resend API key for email alerts (optional)
+- `RESEND_FROM_EMAIL` - Sender email (default: onboarding@resend.dev)
 - `OLLAMA_BASE_URL` - Ollama server URL (default: http://localhost:11434)
 - `OLLAMA_MODEL` - Ollama model name (default: llama3)
-- `WHATSAPP_CHANNEL_URL` - WhatsApp channel URL for FAB button (optional, free)
+- `WHATSAPP_CHANNEL_URL` - WhatsApp channel URL (optional)
 
 ## Key URLs
 - `/` - Homepage
 - `/job/<slug>` - Job detail page
 - `/category/<slug>` - Category page
-- `/state/<slug>` - State-wise jobs page
-- `/qualification/<slug>` - Qualification-wise jobs page
-- `/latest-notifications` - All notifications with pagination
+- `/state/<slug>` - State-wise jobs
+- `/qualification/<slug>` - Qualification-wise jobs
+- `/latest-notifications` - All notifications
 - `/search` - Advanced search
-- `/jobs/<type>` - Jobs by type (latest_jobs, admit_card, result, etc.)
-- `/admin/` - Admin dashboard
+- `/jobs/<type>` - Jobs by type
+- `/admin-login` - Hidden admin entry point
+- `/admin/` - Admin dashboard (requires login)
+- `/admin/scraped-jobs` - Review scraped jobs
 - `/sitemap.xml` - SEO sitemap
 - `/robots.txt` - Robots file
-
-## Cost Policy
-This project uses ONLY free and open-source tools:
-- Database: PostgreSQL (Replit built-in or Neon free tier)
-- AI: Ollama + Llama3 (free, open-source, self-hosted)
-- Email: Resend free tier (100 emails/day)
-- Telegram: Bot API (free)
-- WhatsApp: Channel link (free, no API needed)
-- Mock Tests: Links to free external platforms
-- No paid APIs or subscriptions required

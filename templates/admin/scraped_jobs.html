@@ -1,0 +1,111 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Scraped Jobs Review{% endblock %}
+{% block content %}
+<div class="admin-header">
+    <h1>🤖 Scraped Jobs Review</h1>
+    <div>
+        <form action="{{ url_for('admin.bulk_approve_scraped') }}" method="POST" style="display:inline;" onsubmit="return confirm('Approve and publish all pending scraped jobs?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary">✅ Approve All Pending</button>
+        </form>
+        <form action="{{ url_for('admin.bulk_delete_bad_scraped') }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete all unpublished scraped jobs? This cannot be undone.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline" style="color:#e74c3c; border-color:#e74c3c;">🗑 Delete Unpublished</button>
+        </form>
+    </div>
+</div>
+
+<div style="margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.scraped_jobs', status='all') }}" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline{% endif %}">All</a>
+    <a href="{{ url_for('admin.scraped_jobs', status='published') }}" class="btn btn-sm {% if status_filter == 'published' %}btn-primary{% else %}btn-outline{% endif %}">Published</a>
+    <a href="{{ url_for('admin.scraped_jobs', status='draft') }}" class="btn btn-sm {% if status_filter == 'draft' %}btn-primary{% else %}btn-outline{% endif %}">Pending</a>
+</div>
+
+<div class="form-card" style="padding: 0; overflow: hidden;">
+    <table class="job-table" style="margin:0;">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Added</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for job in jobs.items %}
+        <tr>
+            <td style="max-width: 300px;">
+                <a href="{{ url_for('admin.edit_job', job_id=job.id) }}" style="font-weight:500;">
+                    {{ job.title[:80] }}{% if job.title|length > 80 %}...{% endif %}
+                </a>
+                {% if job.organization %}
+                <br><small style="color:#888;">{{ job.organization[:50] }}</small>
+                {% endif %}
+            </td>
+            <td>
+                <span class="badge badge-{{ job.job_type }}">
+                    {{ job.job_type.replace('_', ' ').title() }}
+                </span>
+            </td>
+            <td>
+                {% if job.category_rel %}
+                    {{ job.category_rel.name }}
+                {% else %}
+                    <span style="color:#aaa;">—</span>
+                {% endif %}
+            </td>
+            <td style="white-space: nowrap; font-size: 12px;">
+                {{ job.created_at.strftime('%d %b %Y') if job.created_at else '—' }}
+            </td>
+            <td>
+                {% if job.is_published %}
+                <span style="color:#27ae60; font-weight:600;">● Live</span>
+                {% else %}
+                <span style="color:#e67e22; font-weight:600;">● Pending</span>
+                {% endif %}
+            </td>
+            <td style="white-space: nowrap;">
+                <form action="{{ url_for('admin.toggle_scraped_job', job_id=job.id) }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm {% if job.is_published %}btn-outline{% else %}btn-primary{% endif %}">
+                        {% if job.is_published %}Unpublish{% else %}Approve{% endif %}
+                    </button>
+                </form>
+                <a href="{{ url_for('admin.edit_job', job_id=job.id) }}" class="btn btn-sm btn-outline">Edit</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" style="text-align:center; padding: 40px; color: #999;">
+                No scraped jobs found. Run the scraper from the dashboard.
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if jobs.pages > 1 %}
+<div style="display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+    {% if jobs.has_prev %}
+    <a href="{{ url_for('admin.scraped_jobs', page=jobs.prev_num, status=status_filter) }}" class="btn btn-outline btn-sm">← Prev</a>
+    {% endif %}
+    <span style="padding: 6px 12px; font-size: 13px; color: #666;">Page {{ jobs.page }} of {{ jobs.pages }}</span>
+    {% if jobs.has_next %}
+    <a href="{{ url_for('admin.scraped_jobs', page=jobs.next_num, status=status_filter) }}" class="btn btn-outline btn-sm">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<style>
+.badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge-latest_jobs { background: #e3f2fd; color: #1565c0; }
+.badge-admit_card { background: #fff3e0; color: #e65100; }
+.badge-result { background: #e8f5e9; color: #2e7d32; }
+.badge-answer_key { background: #fce4ec; color: #880e4f; }
+.badge-syllabus { background: #f3e5f5; color: #6a1b9a; }
+.badge-admission { background: #e0f2f1; color: #00695c; }
+</style>
+{% endblock %}

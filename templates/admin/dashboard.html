@@ -5,10 +5,16 @@
 {% block content %}
 <div class="admin-header">
     <h1>Dashboard</h1>
-    <div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <form action="{{ url_for('admin.run_scraper') }}" method="POST" style="display: inline;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-accent">🔄 Run Scraper</button>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="scan_type" value="quick">
+            <button type="submit" class="btn btn-accent">⚡ Quick Scan</button>
+        </form>
+        <form action="{{ url_for('admin.run_scraper') }}" method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="scan_type" value="deep">
+            <button type="submit" class="btn btn-accent" style="background: #7b2d8b;">🔍 Deep Scan</button>
         </form>
         <a href="{{ url_for('admin.add_job') }}" class="btn btn-primary">➕ Add Job</a>
     </div>
@@ -20,28 +26,42 @@
         <div class="label">Total Jobs</div>
     </div>
     <div class="stat-card">
+        <div class="number">{{ scraped_count }}</div>
+        <div class="label">Auto-Scraped</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ pending_count }}</div>
+        <div class="label">Pending Review</div>
+    </div>
+    <div class="stat-card">
         <div class="number">{{ total_subscribers }}</div>
         <div class="label">Subscribers</div>
     </div>
-    <div class="stat-card">
-        <div class="number">{{ total_categories }}</div>
-        <div class="label">Categories</div>
-    </div>
-    <div class="stat-card">
-        <div class="number">{{ total_notifications }}</div>
-        <div class="label">Notifications</div>
-    </div>
+</div>
+
+<div style="background: #f0f9f0; border: 1px solid #c3e6cb; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; font-size: 14px;">
+    <strong>🔄 Auto-Scheduler:</strong> Quick scan runs every <strong>3 hours</strong> automatically.
+    Deep scan runs every day at <strong>2:00 AM</strong> with PDF extraction enabled.
+    {% if pending_count > 0 %}
+    &nbsp;|&nbsp; <a href="{{ url_for('admin.scraped_jobs', status='draft') }}" style="color:#155724; font-weight:600;">{{ pending_count }} jobs pending review →</a>
+    {% endif %}
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div class="form-card">
-        <h2 style="margin-bottom: 15px; font-size: 18px;">📋 Recent Jobs</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="font-size: 18px; margin: 0;">📋 Recent Jobs</h2>
+            <a href="{{ url_for('admin.jobs_list') }}" style="font-size: 13px; color: #3a7bd5;">View All</a>
+        </div>
         <table class="job-table">
             <thead><tr><th>Title</th><th>Views</th><th>Action</th></tr></thead>
             <tbody>
             {% for job in recent_jobs %}
             <tr>
-                <td><a href="{{ url_for('admin.edit_job', job_id=job.id) }}">{{ job.title[:50] }}</a></td>
+                <td>
+                    <a href="{{ url_for('admin.edit_job', job_id=job.id) }}">{{ job.title[:50] }}</a>
+                    {% if job.is_scraped %}<span style="font-size:10px; background:#e3f2fd; color:#1565c0; padding:1px 5px; border-radius:8px; margin-left:4px;">auto</span>{% endif %}
+                </td>
                 <td>{{ job.views or 0 }}</td>
                 <td><a href="{{ url_for('admin.edit_job', job_id=job.id) }}" class="btn btn-sm btn-outline">Edit</a></td>
             </tr>
@@ -51,22 +71,31 @@
     </div>
 
     <div class="form-card">
-        <h2 style="margin-bottom: 15px; font-size: 18px;">🤖 Scraped Jobs</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="font-size: 18px; margin: 0;">🤖 Latest Scraped</h2>
+            <a href="{{ url_for('admin.scraped_jobs') }}" style="font-size: 13px; color: #3a7bd5;">Review All</a>
+        </div>
         {% if scraped_jobs %}
         <table class="job-table">
-            <thead><tr><th>Title</th><th>Source</th><th>Action</th></tr></thead>
+            <thead><tr><th>Title</th><th>Type</th><th>Status</th></tr></thead>
             <tbody>
             {% for job in scraped_jobs %}
             <tr>
-                <td>{{ job.title[:50] }}</td>
-                <td>{% if job.is_scraped %}Scraped{% else %}Manual{% endif %}</td>
-                <td><a href="{{ url_for('admin.edit_job', job_id=job.id) }}" class="btn btn-sm btn-outline">Edit</a></td>
+                <td><a href="{{ url_for('admin.edit_job', job_id=job.id) }}">{{ job.title[:45] }}</a></td>
+                <td style="font-size: 11px;">{{ job.job_type.replace('_',' ').title() }}</td>
+                <td>
+                    {% if job.is_published %}
+                    <span style="color:#27ae60; font-size:11px;">Live</span>
+                    {% else %}
+                    <span style="color:#e67e22; font-size:11px;">Pending</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p style="color: #999; text-align: center; padding: 20px;">No scraped jobs yet. Click "Run Scraper" to fetch jobs.</p>
+        <p style="color: #999; text-align: center; padding: 20px;">No scraped jobs yet. Click "Quick Scan" or "Deep Scan" to fetch jobs.</p>
         {% endif %}
     </div>
 </div>
